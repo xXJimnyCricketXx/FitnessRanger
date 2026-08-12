@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Login - FitnessRanger!{% endblock %}
+{% block header %}{% endblock %}
+{% block content %}
+<div class="auth-center">
+  <img class="auth-logo" src="{% static 'logo/fitnessranger-logo-stacked/logo-fitnessranger-stacked-dark.png' %}" alt="FitnessRanger!">
+
+  <div class="card auth-card">
+    <h1 class="page-title">Login</h1>
+    <div class="error-msg" id="loginError">Ungueltige Anmeldedaten.</div>
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn">Anmelden</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function (event) {
+  event.preventDefault();
+  const errorBox = document.getElementById('loginError');
+  errorBox.classList.remove('visible');
+
+  const response = await fetch('/api/auth/login/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value,
+    }),
+  });
+
+  if (response.ok) {
+    window.location.href = '/dashboard/';
+  } else {
+    errorBox.classList.add('visible');
+  }
+});
+</script>
+{% endblock %}
