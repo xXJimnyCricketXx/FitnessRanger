@@ -40,6 +40,7 @@ class Goal(models.Model):
     class GoalType(models.TextChoices):
         LOSE_WEIGHT = 'abnehmen', 'Abnehmen'
         BUILD_MUSCLE = 'muskelaufbau', 'Muskelaufbau'
+        BUILD_STRENGTH = 'kraft_aufbauen', 'Kraft aufbauen'
         MAINTAIN = 'halten', 'Halten'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='goals')

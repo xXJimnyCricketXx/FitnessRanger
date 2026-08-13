@@ -18,7 +18,7 @@ class Equipment(models.Model):
         FREE_WEIGHTS = 'freie_gewichte', 'Freie Gewichte'
         MACHINE_STRENGTH = 'maschine_kraft', 'Maschine - Kraft'
         MACHINE_CARDIO = 'maschine_cardio', 'Maschine - Cardio'
-        ACCESSORY = 'zubehoer', 'Zubehoer'
+        ACCESSORY = 'zubehoer', 'Zubehör'
         BALANCE = 'balance_koordination', 'Balance & Koordination'
 
     name = models.CharField(max_length=100, unique=True)
@@ -41,7 +41,7 @@ class Equipment(models.Model):
 
 class Exercise(models.Model):
     class Difficulty(models.TextChoices):
-        BEGINNER = 'anfaenger', 'Anfaenger'
+        BEGINNER = 'anfaenger', 'Anfänger'
         ADVANCED = 'fortgeschritten', 'Fortgeschritten'
         PRO = 'profi', 'Profi'
 
@@ -89,8 +89,8 @@ class Exercise(models.Model):
 
 class ExerciseMuscle(models.Model):
     class Role(models.TextChoices):
-        PRIMARY = 'primaer', 'Primaer'
-        SECONDARY = 'sekundaer', 'Sekundaer'
+        PRIMARY = 'primaer', 'Primär'
+        SECONDARY = 'sekundaer', 'Sekundär'
 
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='exercise_muscles')
     muscle_group = models.ForeignKey(MuscleGroup, on_delete=models.CASCADE, related_name='exercise_muscles')

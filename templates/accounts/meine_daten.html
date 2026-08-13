@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Meine Daten - FitnessRanger!{% endblock %}
+{% block main_class %}main-wide{% endblock %}
+{% block content %}
+<h1 class="page-title">Meine Daten</h1>
+
+<div class="card" id="meineDatenCard" data-initial-tab="{{ initial_tab }}">
+  <div class="tabs">
+    <button type="button" class="tab-btn" data-tab="personal">Persönliche Daten</button>
+    <button type="button" class="tab-btn" data-tab="goal">Ziel</button>
+    <button type="button" class="tab-btn" data-tab="equipment">Ausrüstung</button>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="tab-panel" data-tab-panel="personal">
+      <div class="field">
+        <label for="{{ user_data_form.birth_date.id_for_label }}">Geburtstag</label>
+        {{ user_data_form.birth_date }}
+        {{ user_data_form.birth_date.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ user_data_form.gender.id_for_label }}">Geschlecht</label>
+        {{ user_data_form.gender }}
+        {{ user_data_form.gender.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ user_data_form.height_cm.id_for_label }}">Größe (cm)</label>
+        {{ user_data_form.height_cm }}
+        {{ user_data_form.height_cm.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ user_data_form.starting_weight_kg.id_for_label }}">Ausgangsgewicht (kg)</label>
+        {{ user_data_form.starting_weight_kg }}
+        <span class="helptext">Einmalig gesetzter Referenzwert für deine Fortschritts-Statistik, wird nicht automatisch durch spätere Waage-Werte überschrieben.</span>
+        {{ user_data_form.starting_weight_kg.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ user_data_form.fitness_level.id_for_label }}">Fitness-Stufe</label>
+        {{ user_data_form.fitness_level }}
+        {{ user_data_form.fitness_level.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ user_data_form.activity_level.id_for_label }}">Aktivitätslevel</label>
+        {{ user_data_form.activity_level }}
+        {{ user_data_form.activity_level.errors }}
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="goal">
+      <div class="field">
+        <label for="{{ goal_form.goal_type.id_for_label }}">Zieltyp</label>
+        {{ goal_form.goal_type }}
+        {{ goal_form.goal_type.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ goal_form.target_weight_kg.id_for_label }}">Zielgewicht (kg, optional)</label>
+        {{ goal_form.target_weight_kg }}
+        {{ goal_form.target_weight_kg.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ goal_form.target_date.id_for_label }}">Zieldatum (optional)</label>
+        {{ goal_form.target_date }}
+        {{ goal_form.target_date.errors }}
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="equipment">
+      <div class="checkbox-field">
+        {{ equipment_form.studio_access }}
+        <label for="{{ equipment_form.studio_access.id_for_label }}">Ich habe Zugriff auf ein vollausgestattetes Studio</label>
+      </div>
+      <div class="field">
+        <label>Vorhandene Geräte</label>
+        {% for category_label, items in equipment_by_category %}
+        <p class="equipment-category">{{ category_label }}</p>
+        <div class="checkbox-grid">
+          {% for item in items %}
+          <label>
+            <input type="checkbox" name="equipment-equipment" value="{{ item.pk }}" {% if item.pk|stringformat:"s" in selected_equipment_ids %}checked{% endif %}>
+            {{ item.name }}
+          </label>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        {{ equipment_form.equipment.errors }}
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Speichern</button>
+  </form>
+
+  <div class="tab-panel equipment-add" data-tab-panel="equipment">
+    <p class="equipment-add-title">Neues Gerät hinzufügen</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_equipment">
+      <div class="field">
+        <label for="{{ equipment_create_form.name.id_for_label }}">Name</label>
+        {{ equipment_create_form.name }}
+        {{ equipment_create_form.name.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ equipment_create_form.category.id_for_label }}">Kategorie</label>
+        {{ equipment_create_form.category }}
+        {{ equipment_create_form.category.errors }}
+      </div>
+      <button type="submit" class="btn btn-outline">Gerät hinzufügen</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(function () {
+  var card = document.getElementById('meineDatenCard');
+  var initialTab = card.dataset.initialTab || 'personal';
+  var tabBtns = card.querySelectorAll('.tab-btn');
+  var panels = card.querySelectorAll('.tab-panel');
+
+  function activate(tab) {
+    tabBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    panels.forEach(function (panel) {
+      panel.classList.toggle('active', panel.dataset.tabPanel === tab);
+    });
+  }
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () { activate(btn.dataset.tab); });
+  });
+
+  activate(initialTab);
+})();
+</script>
+{% endblock %}

@@ -1,10 +1,24 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-08-13",
+    "notes": [
+      "Neuer Profil-Bereich: eigenes Avatar hochladen, Benutzername und Passwort ändern"
+    ]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2026-08-13",
+    "notes": [
+      "Neuer Bereich \"Meine Daten\" zum Hinterlegen von Körperdaten, Ziel und Trainingsausrüstung"
+    ]
+  },
+  {
     "version": "0.2.0",
     "date": "2026-08-12",
     "notes": [
-      "Login-Bereich mit persoenlichem Dashboard",
-      "Neue Navigation mit Seitenmenue und Benutzerkonto-Menue"
+      "Login-Bereich mit persönlichem Dashboard",
+      "Neue Navigation mit Seitenmenü und Benutzerkonto-Menü"
     ]
   },
   {

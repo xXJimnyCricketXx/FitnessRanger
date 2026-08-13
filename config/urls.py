@@ -14,11 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from accounts.views import DashboardView, LoginPageView
+from accounts.views import DashboardView, LoginPageView, MeineDatenView, ProfileView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,5 +28,10 @@ urlpatterns = [
     path('api/', include('catalog.urls')),
     path('login/', LoginPageView.as_view(), name='login-page'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('meine-daten/', MeineDatenView.as_view(), name='meine-daten'),
+    path('profil/', ProfileView.as_view(), name='profil'),
     path('', RedirectView.as_view(pattern_name='dashboard', permanent=False)),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

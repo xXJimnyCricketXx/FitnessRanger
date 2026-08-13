@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Profil - FitnessRanger!{% endblock %}
+{% block content %}
+<h1 class="page-title">Profil</h1>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <div class="card form-section">
+    <h2 class="section-title">Avatar</h2>
+    <div class="avatar-preview">
+      {% if profile.avatar %}
+      <img src="{{ profile.avatar.url }}" alt="{{ user.username }}">
+      {% else %}
+      <span class="avatar avatar-lg">{{ user.username|slice:":1"|upper }}</span>
+      {% endif %}
+    </div>
+    <div class="field">
+      <label for="{{ avatar_form.avatar.id_for_label }}">Neues Bild hochladen</label>
+      {{ avatar_form.avatar }}
+      <span class="helptext">Ein neues Bild ersetzt dein bisheriges Avatar automatisch.</span>
+      {{ avatar_form.avatar.errors }}
+    </div>
+  </div>
+
+  <div class="card form-section">
+    <h2 class="section-title">Benutzername</h2>
+    <div class="field">
+      <label for="{{ username_form.username.id_for_label }}">Benutzername</label>
+      {{ username_form.username }}
+      {{ username_form.username.errors }}
+    </div>
+  </div>
+
+  <div class="card form-section">
+    <h2 class="section-title">Passwort</h2>
+    <span class="helptext">Nur ausfüllen, wenn du dein Passwort ändern möchtest.</span>
+    <div class="field">
+      <label for="{{ password_form.old_password.id_for_label }}">Aktuelles Passwort</label>
+      {{ password_form.old_password }}
+      {{ password_form.old_password.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ password_form.new_password1.id_for_label }}">Neues Passwort</label>
+      {{ password_form.new_password1 }}
+      {{ password_form.new_password1.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ password_form.new_password2.id_for_label }}">Neues Passwort bestätigen</label>
+      {{ password_form.new_password2 }}
+      {{ password_form.new_password2.errors }}
+    </div>
+  </div>
+
+  <button type="submit" class="btn profil-save-btn">Speichern</button>
+</form>
+{% endblock %}
