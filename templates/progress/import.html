@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Messungen importieren - FitnessRanger!{% endblock %}
+{% block main_class %}main-wide{% endblock %}
+{% block content %}
+<h1 class="page-title">Messungen importieren</h1>
+
+<div class="card page-body">
+  {% if not preview %}
+  <p class="settings-text">Lade den CSV-Export deiner Waage hoch. Du siehst zuerst eine Vorschau, gespeichert wird erst nach deiner Bestätigung. Unterstützt wird bisher: {% for fmt in formats %}{{ fmt.name }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+  {% if error %}<p class="settings-error">{{ error }}</p>{% endif %}
+  {% if problems %}
+  <ul class="import-problems">{% for problem in problems|slice:":20" %}<li>{{ problem }}</li>{% endfor %}</ul>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="settings-row">
+      <div class="field">
+        <label for="importFile">CSV-Datei</label>
+        <input type="file" name="file" id="importFile" accept=".csv,text/csv">
+      </div>
+    </div>
+    <p class="settings-hint">Gibt es schon einen Eintrag am selben Tag, werden nur die Waagenwerte ergänzt oder aktualisiert. Deine Körpermaße bleiben erhalten.</p>
+    <button type="submit" class="btn section-save">Vorschau anzeigen</button>
+    <a href="{% url 'fortschritt' %}" class="btn btn-outline form-cancel">Abbrechen</a>
+  </form>
+
+  {% else %}
+  <p class="settings-text">{{ file_name }} ({{ result.format.name }}): <strong>{{ new_count }}</strong> neu, <strong>{{ changed_count }}</strong> geändert, <strong>{{ unchanged_count }}</strong> unverändert.</p>
+  {% if result.replaced_same_day %}<p class="settings-hint">{{ result.replaced_same_day }} weitere Messung{{ result.replaced_same_day|pluralize:"en" }} am selben Tag wurde{{ result.replaced_same_day|pluralize:"n" }} übergangen. Pro Tag zählt die späteste Messung.</p>{% endif %}
+  {% if result.skipped_columns %}<p class="settings-hint">Nicht übernommene Spalten: {{ result.skipped_columns|join:", " }}</p>{% endif %}
+  {% if result.problems %}
+  <p class="settings-hint">Hinweise:</p>
+  <ul class="import-problems">{% for problem in result.problems|slice:":20" %}<li>{{ problem }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <div class="table-wrap import-preview">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Status</th>
+          <th>Gewicht</th>
+          <th>Körperfett (%)</th>
+          <th>Werte</th>
+          <th>Änderungen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview %}
+        <tr>
+          <td>{{ row.date|date:"d.m.Y" }}</td>
+          <td><span class="pill import-status-{{ row.status|slugify }}">{{ row.status|capfirst }}</span></td>
+          <td>{{ row.weight }}</td>
+          <td>{{ row.body_fat }}</td>
+          <td>{{ row.count }}</td>
+          <td>{% if row.status == 'geändert' %}{% for change in row.changes %}{{ change.label }}: {{ change.old }} → {{ change.new }}{% if not forloop.last %}<br>{% endif %}{% endfor %}{% else %}–{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" name="confirm" value="1" class="btn section-save"{% if not new_count and not changed_count %} disabled{% endif %}>Importieren</button>
+    <a href="{% url 'fortschritt-import' %}" class="btn btn-outline form-cancel">Andere Datei</a>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

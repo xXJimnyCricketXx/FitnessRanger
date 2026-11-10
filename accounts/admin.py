@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, UserData
+from .models import Profile, SystemSettings, UserData, UserSettings
 
 
 @admin.register(UserData)
@@ -10,7 +10,18 @@ class UserDataAdmin(admin.ModelAdmin):
     search_fields = ('user__username',)
 
 
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ('auto_enabled', 'interval_hours', 'keep_count', 'last_auto_at')
+
+
+@admin.register(UserSettings)
+class UserSettingsAdmin(admin.ModelAdmin):
+    list_display = ('user', 'language', 'weight_unit', 'length_unit')
+    search_fields = ('user__username',)
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'avatar')
+    list_display = ('user', 'display_name', 'avatar')
     search_fields = ('user__username',)

@@ -1,0 +1,9 @@
+<a href="#" class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-title">{{ item.name }}</h3>
+    <div class="item-card-badges">
+      {% if item.is_active %}<span class="item-badge item-badge-active">Aktiv</span>{% endif %}
+      <span class="item-badge">{{ item.entries.count }} Einträge</span>
+    </div>
+  </div>
+</a>

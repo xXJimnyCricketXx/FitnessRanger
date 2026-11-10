@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen - FitnessRanger!{% endblock %}
+{% block main_class %}main-settings{% endblock %}
+{% block content %}
+<h1 class="page-title">Einstellungen</h1>
+
+<div class="page-body" data-tab-card data-initial-tab="{{ initial_tab }}">
+<div class="card">
+  <div class="tabs">
+    <button type="button" class="tab-btn" data-tab="general">Allgemein</button>
+    <button type="button" class="tab-btn" data-tab="backups">Backups</button>
+    {% if user.is_superuser %}
+    <button type="button" class="tab-btn" data-tab="system">System</button>
+    {% endif %}
+  </div>
+
+  <div class="tab-panel" data-tab-panel="general">
+    <form method="post" action="{% url 'einstellungen' %}" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label for="{{ form.language.id_for_label }}">Sprache</label>
+        {{ form.language }}
+        {{ form.language.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.weight_unit.id_for_label }}">Gewicht</label>
+        {{ form.weight_unit }}
+        {{ form.weight_unit.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.length_unit.id_for_label }}">Größe und Maße</label>
+        {{ form.length_unit }}
+        {{ form.length_unit.errors }}
+      </div>
+      <button type="submit" class="btn section-save">Speichern</button>
+    </form>
+  </div>
+
+  <div class="tab-panel" data-tab-panel="backups">
+    <h2 class="section-title">Meine Daten</h2>
+    <p class="settings-text">Lädt alle deine persönlichen Daten als ZIP-Datei herunter: Profil, Einstellungen, Körperdaten, Ziele, Ausrüstung, Pläne, Tracking und Fortschritt samt Bildern, dazu die Übungen und Workouts, die du erstellt hast oder verwendest. Dein Passwort ist nicht enthalten.</p>
+    <a href="{% url 'backup-meine-daten' %}" class="btn">Backup herunterladen</a>
+    <p class="helptext settings-hint">Die Datei enthält sensible Gesundheitsdaten und ist nicht verschlüsselt, bewahre sie also sicher auf.</p>
+  </div>
+
+  {% if user.is_superuser %}
+  <div class="tab-panel" data-tab-panel="system">
+    <h2 class="section-title">Automatische Backups</h2>
+    {% if system_settings.last_auto_error %}
+    <p class="settings-error">Das letzte automatische Backup ist fehlgeschlagen: {{ system_settings.last_auto_error }}</p>
+    {% endif %}
+    <p class="settings-text">Letztes automatisches Backup: {% if system_settings.last_auto_at %}{{ system_settings.last_auto_at|date:"d.m.Y, H:i" }} Uhr{% else %}noch keines{% endif %}</p>
+    <form method="post" action="{% url 'system-einstellungen' %}" novalidate>
+      {% csrf_token %}
+      <div class="checkbox-field">
+        {{ system_form.auto_enabled }}
+        <label for="{{ system_form.auto_enabled.id_for_label }}">Automatische Backups aktivieren</label>
+      </div>
+      <div class="settings-row">
+        <div class="field">
+          <label for="{{ system_form.interval_hours.id_for_label }}">Intervall</label>
+          {{ system_form.interval_hours }}
+          {{ system_form.interval_hours.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ system_form.keep_count.id_for_label }}">Aufbewahren (Anzahl)</label>
+          {{ system_form.keep_count }}
+          <span class="helptext">Ältere automatische Backups werden gelöscht.</span>
+          {{ system_form.keep_count.errors }}
+        </div>
+      </div>
+      <button type="submit" class="btn section-save">Speichern</button>
+    </form>
+
+    <h2 class="section-title settings-section">Vorhandene Backups</h2>
+    <p class="settings-text">Ein Backup enthält die komplette Datenbank mit den Daten und Passwort-Hashes aller Nutzer sowie alle hochgeladenen Bilder. Die Backups liegen auf demselben Datenträger wie die App. Lade wichtige Backups herunter und bewahre sie getrennt auf.</p>
+    <form method="post" action="{% url 'backup-erstellen' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline">Jetzt Backup erstellen</button>
+    </form>
+    {% if backups %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Erstellt</th><th>Art</th><th>Größe</th><th></th></tr></thead>
+        <tbody>
+          {% for backup in backups %}
+          <tr>
+            <td>{{ backup.created_at|date:"d.m.Y, H:i" }} Uhr</td>
+            <td>{{ backup.kind_label }}</td>
+            <td>{{ backup.size|filesizeformat }}</td>
+            <td class="data-table-actions">
+              <a href="{% url 'backup-download' backup.name %}" class="btn btn-outline btn-small">Herunterladen</a>
+              <form method="post" action="{% url 'backup-loeschen' backup.name %}" onsubmit="return confirm('Dieses Backup wirklich löschen?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-small">Löschen</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="settings-text table-empty">Noch keine Backups vorhanden.</p>
+    {% endif %}
+
+    <h2 class="section-title settings-section">Wiederherstellen</h2>
+    <p class="settings-text">Ersetzt alle aktuellen Daten und Bilder durch den Stand des Backups. Vorher wird automatisch eine Sicherheitskopie erstellt. Danach müssen sich alle neu anmelden.</p>
+    <form method="post" action="{% url 'backup-wiederherstellen' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="settings-row">
+        <div class="field">
+          <label for="restoreSource">Vorhandenes Backup</label>
+          <select name="source" id="restoreSource">
+            <option value="">Bitte wählen</option>
+            {% for backup in backups %}
+            <option value="{{ backup.name }}">{{ backup.created_at|date:"d.m.Y, H:i" }} Uhr ({{ backup.kind_label }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="restoreUpload">Oder Datei hochladen</label>
+          <input type="file" name="upload" id="restoreUpload" accept=".zip">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="field">
+          <label for="restoreConfirm">Zur Bestätigung „{{ confirm_restore }}“ eingeben</label>
+          <input type="text" name="confirmation" id="restoreConfirm" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="restorePassword">Dein Passwort</label>
+          <input type="password" name="password" id="restorePassword" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-danger">Backup wiederherstellen</button>
+    </form>
+
+    <h2 class="section-title settings-section">Benutzer</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Benutzername</th><th>Anzeigename</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for managed, shown_name in managed_users %}
+          <tr>
+            <td>{{ managed.username }}</td>
+            <td>{% if shown_name != managed.username %}{{ shown_name }}{% else %}–{% endif %}</td>
+            <td>{{ managed.email|default:"–" }}</td>
+            <td>{% if managed.is_superuser %}Administrator{% else %}Nutzer{% endif %}</td>
+            <td>{% if managed.is_active %}Aktiv{% else %}Gesperrt{% endif %}</td>
+            <td class="data-table-actions"><a href="{% url 'benutzer-bearbeiten' managed.pk %}" class="btn btn-outline btn-small">Bearbeiten</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{% url 'benutzer-neu' %}" class="btn btn-outline">Neuer Benutzer</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if user.is_superuser %}
+<div class="card danger-card tab-panel" data-tab-panel="system">
+    <h2 class="section-title danger-title">
+      <svg class="danger-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L18 16.5H2z"/><path d="M10 8.5v3.5M10 14.5v.1"/></svg>
+      Danger Zone
+    </h2>
+    <p class="settings-text">Diese Aktionen betreffen alle Nutzer. Vor beiden wird automatisch eine Sicherheitskopie erstellt.</p>
+    <form method="post" action="{% url 'danger-daten' %}" class="danger-block">
+      {% csrf_token %}
+      <h3 class="danger-heading">Trainings- und Fortschrittsdaten löschen</h3>
+      <p class="settings-text">Löscht bei allen Nutzern Pläne, Tracking, Fortschritt samt Fotos, Ziele, Körperdaten und Ausrüstung. Konten und die Übungs- und Workout-Bibliothek bleiben erhalten.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="dataConfirm">Zur Bestätigung „{{ confirm_delete_data }}“ eingeben</label>
+          <input type="text" name="confirmation" id="dataConfirm" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="dataPassword">Dein Passwort</label>
+          <input type="password" name="password" id="dataPassword" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-danger">Daten löschen</button>
+    </form>
+    <form method="post" action="{% url 'danger-reset' %}" class="danger-block">
+      {% csrf_token %}
+      <h3 class="danger-heading">Installation zurücksetzen</h3>
+      <p class="settings-text">Löscht alle anderen Konten, die komplette Bibliothek, alle persönlichen Daten und alle Bilder. Nur dein Konto und die mitgelieferten Stammdaten bleiben. Backups bleiben ebenfalls erhalten.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="resetConfirm">Zur Bestätigung „{{ confirm_reset }}“ eingeben</label>
+          <input type="text" name="confirmation" id="resetConfirm" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="resetPassword">Dein Passwort</label>
+          <input type="password" name="password" id="resetPassword" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-danger">Installation zurücksetzen</button>
+    </form>
+</div>
+{% endif %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+{% include "accounts/_tabs_script.html" %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% load catalog_extras %}
+<div class="item-card">
+  <a href="#" class="item-card-link">
+    <div class="item-card-header diff-{{ item.difficulty }}">
+      <h3 class="item-card-title">{{ item.name }}</h3>
+    </div>
+    <div class="item-card-image">
+      {% if item.image %}
+      <img src="{{ item.image.url }}" alt="{{ item.name }}">
+      {% else %}
+      <div class="item-card-image-placeholder">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="2.5" width="15" height="15" rx="2"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M17.5 13l-4-4-8 8"/></svg>
+      </div>
+      {% endif %}
+      <div class="item-card-pills">
+        {% if item.difficulty %}<span class="pill pill-{{ item.difficulty }}">{{ item.get_difficulty_display }}</span>{% endif %}
+        {% for goal in item.goals.all %}<span class="pill pill-goal">{{ goal.name }}</span>{% endfor %}
+      </div>
+    </div>
+  </a>
+
+  <button type="button" class="item-card-row row-toggle equipment-toggle">
+    <span class="item-card-row-label">Ausrüstung</span>
+    <span class="equipment-row-summary">
+      {% for eq in item.equipment.all %}
+      <span class="equipment-chip">{% equipment_icon eq.category %}</span>
+      {% empty %}
+      <span class="equipment-chip-empty">Kein Gerät nötig</span>
+      {% endfor %}
+      {% if item.equipment.all %}
+      <svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,8 10,12 14,8"/></svg>
+      {% endif %}
+    </span>
+  </button>
+  {% if item.equipment.all %}
+  <div class="item-card-equipment-list row-expandable">
+    {% for eq in item.equipment.all %}
+    <span class="equipment-list-item">{% equipment_icon eq.category %}<span>{{ eq.name }}</span></span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <button type="button" class="item-card-row row-toggle bodymap-toggle">
+    <span class="item-card-row-label">Muskulatur</span>
+    <svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,8 10,12 14,8"/></svg>
+  </button>
+  <div class="item-card-bodymap row-expandable">
+    <span class="bodymap-view">{% body_map item 'front' %}</span>
+    <span class="bodymap-view">{% body_map item 'back' %}</span>
+  </div>
+
+  <div class="item-card-footer">{{ item.instructions|truncatechars:70|default:"Keine Beschreibung" }}</div>
+</div>

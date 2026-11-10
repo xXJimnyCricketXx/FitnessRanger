@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Neue Übung - FitnessRanger!{% endblock %}
+{% block content %}
+<h1 class="page-title">Neue Übung</h1>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <div class="card form-section">
+    <h2 class="section-title">Grunddaten</h2>
+    <div class="field">
+      <label for="{{ form.name.id_for_label }}">Name</label>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.image.id_for_label }}">Bild (optional)</label>
+      {{ form.image }}
+      {{ form.image.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.difficulty.id_for_label }}">Schwierigkeit</label>
+      {{ form.difficulty }}
+      {{ form.difficulty.errors }}
+    </div>
+    <div class="field">
+      <label>Ziel</label>
+      <div class="checkbox-grid">
+        {% for checkbox in form.goals %}
+        <label>{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="field">
+      <label for="{{ form.force.id_for_label }}">Kraftrichtung</label>
+      {{ form.force }}
+    </div>
+    <div class="field">
+      <label for="{{ form.mechanic.id_for_label }}">Mechanik</label>
+      {{ form.mechanic }}
+    </div>
+    <div class="field">
+      <label for="{{ form.grip.id_for_label }}">Griff</label>
+      {{ form.grip }}
+    </div>
+    <div class="field">
+      <label for="{{ form.video_url.id_for_label }}">Video-URL (optional)</label>
+      {{ form.video_url }}
+      {{ form.video_url.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.instructions.id_for_label }}">Ausführung</label>
+      {{ form.instructions }}
+      {{ form.instructions.errors }}
+    </div>
+  </div>
+
+  <div class="card form-section">
+    <h2 class="section-title">Ausrüstung</h2>
+    {% for category_label, items in equipment_by_category %}
+    <p class="equipment-category">{{ category_label }}</p>
+    <div class="checkbox-grid">
+      {% for item in items %}
+      <label>
+        <input type="checkbox" name="equipment" value="{{ item.pk }}" {% if item.pk|stringformat:"s" in selected_equipment_ids %}checked{% endif %}>
+        {{ item.name }}
+      </label>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card form-section">
+    <h2 class="section-title">Zielmuskeln</h2>
+    <div class="field">
+      <label>Primär</label>
+      {% for view_label, muscles in muscles_by_view %}
+      <p class="equipment-category">{{ view_label }}</p>
+      <div class="checkbox-grid">
+        {% for mg in muscles %}
+        <label>
+          <input type="checkbox" name="primary_muscles" value="{{ mg.pk }}" {% if mg.pk|stringformat:"s" in selected_primary_ids %}checked{% endif %}>
+          {{ mg.name }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="field">
+      <label>Sekundär</label>
+      {% for view_label, muscles in muscles_by_view %}
+      <p class="equipment-category">{{ view_label }}</p>
+      <div class="checkbox-grid">
+        {% for mg in muscles %}
+        <label>
+          <input type="checkbox" name="secondary_muscles" value="{{ mg.pk }}" {% if mg.pk|stringformat:"s" in selected_secondary_ids %}checked{% endif %}>
+          {{ mg.name }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button type="submit" class="btn form-submit-btn">Übung anlegen</button>
+</form>
+{% endblock %}

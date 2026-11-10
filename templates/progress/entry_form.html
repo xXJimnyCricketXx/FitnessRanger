@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - FitnessRanger!{% endblock %}
+{% block main_class %}main-wide{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ title }}</h1>
+
+<form method="post" class="card page-body" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="settings-error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+  <h2 class="section-title">Messung</h2>
+  <div class="settings-row">
+    <div class="field">
+      <label for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+      {{ form.date }}
+      {{ form.date.errors }}
+    </div>
+    {% if has_weight %}
+    <div class="field">
+      <label for="{{ form.weight_kg.id_for_label }}">{{ form.weight_kg.label }}</label>
+      {{ form.weight_kg }}
+      {{ form.weight_kg.errors }}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if measurement_fields %}
+  <h2 class="section-title settings-section">Körpermaße</h2>
+  <div class="settings-row">
+    {% for field in measurement_fields %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if scale_fields %}
+  <h2 class="section-title settings-section">Waagenwerte{% if not entry %} (optional){% endif %}</h2>
+  {% if not entry %}<p class="settings-text">Nur wenn deine Waage diese Werte anzeigt.</p>{% endif %}
+  <div class="settings-row">
+    {% for field in scale_fields %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <p class="settings-hint">{% if entry %}Alle Werte sind optional, nur das Datum ist Pflicht.{% else %}Nur das Datum ist Pflicht. Gibt es für den Tag schon einen Eintrag, zum Beispiel aus dem Import, werden die Werte dort ergänzt. Leere Felder ändern nichts.{% endif %}</p>
+
+  <button type="submit" class="btn section-save">Speichern</button>
+  <a href="{% url 'fortschritt' %}{% if entry %}?tab=historie{% elif not has_weight %}?tab=koerpermasse{% endif %}" class="btn btn-outline form-cancel">Abbrechen</a>
+</form>
+{% endblock %}

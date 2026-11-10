@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{% if target %}Benutzer bearbeiten{% else %}Neuer Benutzer{% endif %} - FitnessRanger!{% endblock %}
+{% block main_class %}main-wide{% endblock %}
+{% block content %}
+<h1 class="page-title">{% if target %}Benutzer bearbeiten{% else %}Neuer Benutzer{% endif %}</h1>
+
+<div class="page-body">
+  <form method="post" class="card form-section" novalidate>
+    {% csrf_token %}
+    <div class="field">
+      <label for="{{ form.username.id_for_label }}">Benutzername</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.email.id_for_label }}">E-Mail (optional)</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.password1.id_for_label }}">{% if target %}Neues Passwort (optional){% else %}Passwort{% endif %}</label>
+      {{ form.password1 }}
+      {{ form.password1.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ form.password2.id_for_label }}">Passwort bestätigen</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+    </div>
+    {% if form.is_superuser %}
+    <div class="checkbox-field">
+      {{ form.is_superuser }}
+      <label for="{{ form.is_superuser.id_for_label }}">Administrator</label>
+    </div>
+    <div class="checkbox-field">
+      {{ form.is_active }}
+      <label for="{{ form.is_active.id_for_label }}">Konto aktiv</label>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn section-save">Speichern</button>
+    <a href="{% url 'einstellungen' %}?tab=system" class="btn btn-outline form-cancel">Zurück</a>
+  </form>
+
+  {% if target and target.pk != user.pk %}
+  <form method="post" action="{% url 'benutzer-loeschen' target.pk %}" class="card form-section">
+    {% csrf_token %}
+    <h2 class="section-title danger-title">Konto löschen</h2>
+    <p class="settings-text">Löscht das Konto mit allen persönlichen Daten, Plänen und Fortschritten. Erstellte Übungen und Workouts bleiben in der Bibliothek.</p>
+    <div class="field">
+      <label for="deleteConfirm">Zur Bestätigung „{{ target.username }}“ eingeben</label>
+      <input type="text" name="confirmation" id="deleteConfirm" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-danger">Konto löschen</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

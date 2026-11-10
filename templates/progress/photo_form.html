@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Fotos hochladen - FitnessRanger!{% endblock %}
+{% block main_class %}main-wide{% endblock %}
+{% block content %}
+<h1 class="page-title">Fotos hochladen</h1>
+
+<form method="post" enctype="multipart/form-data" class="card page-body" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="settings-error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+  <h2 class="section-title">Messung</h2>
+  <div class="settings-row">
+    <div class="field">
+      <label for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+      {{ form.date }}
+      {{ form.date.errors }}
+    </div>
+  </div>
+
+  <h2 class="section-title settings-section">Fotos</h2>
+  <p class="settings-text">Jede Ansicht hat ihren festen Platz, damit beim Vergleich immer gleiche Ansichten nebeneinanderstehen. Am besten immer mit gleichem Licht, gleichem Abstand und zur gleichen Tageszeit.</p>
+  <div class="photo-upload-grid">
+    {% for field in form %}{% if field.name != 'date' %}
+    <label class="photo-upload-slot" for="{{ field.id_for_label }}">
+      <span class="photo-upload-title">{{ field.label }}</span>
+      <span class="photo-upload-preview" data-preview-for="{{ field.id_for_label }}"><span>Foto wählen</span></span>
+      {{ field }}
+      {{ field.errors }}
+    </label>
+    {% endif %}{% endfor %}
+  </div>
+
+  <p class="settings-hint">Gibt es für den Tag und die Ansicht schon ein Foto, wird es ersetzt. Beim Speichern entfernt die App alle Zusatzdaten aus dem Bild, auch den Aufnahmeort. Die Fotos siehst nur du.</p>
+
+  <button type="submit" class="btn section-save">Speichern</button>
+  <a href="{% url 'fortschritt' %}?tab=fotos" class="btn btn-outline form-cancel">Abbrechen</a>
+</form>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.photo-upload-slot input[type=file]').forEach(function (input) {
+  input.addEventListener('change', function () {
+    var preview = document.querySelector('[data-preview-for="' + input.id + '"]');
+    var file = input.files && input.files[0];
+    preview.innerHTML = '';
+    if (!file) { preview.innerHTML = '<span>Foto wählen</span>'; return; }
+    var img = document.createElement('img');
+    img.alt = '';
+    img.src = URL.createObjectURL(file);
+    preview.appendChild(img);
+  });
+});
+</script>
+{% endblock %}

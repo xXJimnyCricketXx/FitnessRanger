@@ -12,6 +12,7 @@ db.sqlite3
 db.sqlite3-journal
 /staticfiles/
 /media/
+/backups/
 
 # Secrets / local env
 .env
@@ -27,3 +28,6 @@ Thumbs.db
 
 # Scratch folder for files provided during development (not part of the repo)
 /dev-inbox/
+
+# Purchased graphics, license not cleared for a public repo
+/static/img/muscles/

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Tools - FitnessRanger!{% endblock %}
+{% block main_class %}main-full{% endblock %}
+{% block content %}
+<div class="list-header">
+  <h1 class="list-title">Tools</h1>
+</div>
+
+<div data-tab-card data-initial-tab="{{ initial_tab }}" id="tools"
+     data-weight-unit="{{ weight_unit }}" data-length-unit="{{ length_unit }}">
+  <div class="list-tabs tools-tabs">
+    <button type="button" class="list-tab" data-tab="bmi">BMI</button>
+    <button type="button" class="list-tab" data-tab="kalorien">Kalorien</button>
+    <button type="button" class="list-tab" data-tab="makros">Makronährstoffe</button>
+    <button type="button" class="list-tab" data-tab="einrm">1RM</button>
+    <button type="button" class="list-tab" data-tab="herz">Herzfrequenz</button>
+    <button type="button" class="list-tab" data-tab="koerperfett">Körperfett</button>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="bmi">
+    {% include "tools/_weight.html" with id="bmi" %}
+    {% include "tools/_height.html" with id="bmi" %}
+    <div class="tool-result" id="bmi-result"></div>
+    <p class="helptext settings-hint">Der BMI berücksichtigt keine Muskelmasse und sagt bei viel Muskulatur wenig aus.</p>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="kalorien">
+    {% include "tools/_gender.html" with id="kcal" %}
+    <div class="field">
+      <label for="kcal-age">Alter (Jahre)</label>
+      <input type="number" id="kcal-age" data-age step="1" min="0">
+    </div>
+    {% include "tools/_weight.html" with id="kcal" %}
+    {% include "tools/_height.html" with id="kcal" %}
+    <div class="field">
+      <label for="kcal-activity">Aktivitätslevel</label>
+      <select id="kcal-activity">
+        <option value="">Bitte wählen</option>
+        {% for value, label in activity_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="tool-result" id="kcal-result"></div>
+    <p class="helptext settings-hint">Berechnet mit der Mifflin-St-Jeor-Formel.</p>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="makros">
+    <div class="field">
+      <label for="macro-kcal">Täglicher Kalorienbedarf (kcal)</label>
+      <input type="number" id="macro-kcal" step="1" min="0">
+      <span class="helptext">Wird aus dem Reiter „Kalorien“ übernommen, solange du hier nichts änderst.</span>
+    </div>
+    {% include "tools/_weight.html" with id="macro" %}
+    <div class="field">
+      <label for="macro-goal">Ziel</label>
+      <select id="macro-goal">
+        <option value="">Bitte wählen</option>
+        {% for value, label in goal_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="tool-result" id="macro-result"></div>
+    <p class="helptext settings-hint">Kalorien je nach Ziel: Abnehmen -20 %, Muskelaufbau +10 %, Kraft aufbauen +5 %. Eiweiß 1,6 bis 2 g pro kg Körpergewicht, Fett 25 % der Kalorien, der Rest Kohlenhydrate.</p>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="einrm">
+    <div class="settings-row">
+      <div class="field">
+        <label for="orm-weight">Gehobenes Gewicht ({{ weight_unit }})</label>
+        <input type="number" id="orm-weight" step="0.5" min="0">
+      </div>
+      <div class="field">
+        <label for="orm-reps">Wiederholungen (1 bis 12)</label>
+        <input type="number" id="orm-reps" step="1" min="1" max="12">
+      </div>
+    </div>
+    <div class="tool-result" id="orm-result"></div>
+    <p class="helptext settings-hint">Berechnet mit der Brzycki-Formel. Die Wiederholungen in der Tabelle sind Richtwerte.</p>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="herz">
+    <div class="field">
+      <label for="hr-age">Alter (Jahre)</label>
+      <input type="number" id="hr-age" data-age step="1" min="0">
+    </div>
+    <div class="settings-row">
+      <div class="field">
+        <label for="hr-max">Eigener Maximalpuls (optional)</label>
+        <input type="number" id="hr-max" step="1" min="0">
+      </div>
+      <div class="field">
+        <label for="hr-rest">Ruhepuls (optional)</label>
+        <input type="number" id="hr-rest" step="1" min="0">
+      </div>
+    </div>
+    <div class="tool-result" id="hr-result"></div>
+    <p class="helptext settings-hint">Ohne eigenen Wert wird der Maximalpuls mit der Tanaka-Formel geschätzt. Mit Ruhepuls werden die Zonen nach Karvonen berechnet.</p>
+  </div>
+
+  <div class="card tools-panel tab-panel" data-tab-panel="koerperfett">
+    {% include "tools/_gender.html" with id="bf" %}
+    {% include "tools/_height.html" with id="bf" %}
+    <div class="settings-row">
+      <div class="field">
+        <label for="bf-neck">Halsumfang ({% if length_unit == 'ft_in' %}in{% else %}cm{% endif %})</label>
+        <input type="number" id="bf-neck" step="0.1" min="0">
+      </div>
+      <div class="field">
+        <label for="bf-waist">Bauchumfang ({% if length_unit == 'ft_in' %}in{% else %}cm{% endif %})</label>
+        <input type="number" id="bf-waist" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="field" id="bf-hip-field">
+      <label for="bf-hip">Hüftumfang ({% if length_unit == 'ft_in' %}in{% else %}cm{% endif %})</label>
+      <input type="number" id="bf-hip" step="0.1" min="0">
+    </div>
+    <div class="tool-result" id="bf-result"></div>
+    <p class="helptext settings-hint">Schätzung nach der Navy-Methode. Rechne mit einer Abweichung von etwa 3 bis 4 Prozentpunkten. Für kurzfristige Veränderungen eignet sie sich kaum. Das Risiko laut Bauchumfang bezieht sich auf Stoffwechsel- und Herz-Kreislauf-Erkrankungen.</p>
+  </div>
+
+  <p class="helptext settings-hint tools-disclaimer">Alle Ergebnisse sind Richtwerte und ersetzen keine medizinische Beratung. Eingaben werden nicht gespeichert.</p>
+</div>
+{{ defaults|json_script:"toolDefaults" }}
+{% endblock %}
+{% block extra_scripts %}
+{% include "accounts/_tabs_script.html" %}
+<script src="{% static 'js/tools-calc.js' %}"></script>
+<script src="{% static 'js/tools.js' %}"></script>
+{% endblock %}

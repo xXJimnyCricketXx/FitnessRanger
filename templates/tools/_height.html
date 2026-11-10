@@ -1,0 +1,17 @@
+{% if length_unit == 'ft_in' %}
+<div class="settings-row" data-height="{{ id }}">
+  <div class="field">
+    <label for="{{ id }}-height-ft">Größe (ft)</label>
+    <input type="number" id="{{ id }}-height-ft" step="1" min="0">
+  </div>
+  <div class="field">
+    <label for="{{ id }}-height-in">Größe (in)</label>
+    <input type="number" id="{{ id }}-height-in" step="0.1" min="0">
+  </div>
+</div>
+{% else %}
+<div class="field" data-height="{{ id }}">
+  <label for="{{ id }}-height-cm">Größe (cm)</label>
+  <input type="number" id="{{ id }}-height-cm" step="0.1" min="0">
+</div>
+{% endif %}

@@ -1,0 +1,23 @@
+# Fixed test container. The values below are for local testing only.
+name: fitnessranger-test
+services:
+  app:
+    build: .
+    image: fitnessranger:test
+    container_name: fitnessranger_test
+    ports:
+      - "127.0.0.1:18107:8000"
+    environment:
+      DJANGO_SECRET_KEY: local-test-container-only
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_DB_PATH: /app/data/db.sqlite3
+      DJANGO_MEDIA_ROOT: /app/data/media
+      DJANGO_BACKUP_DIR: /app/data/backups
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_PASSWORD: admin
+      DJANGO_SUPERUSER_EMAIL: admin@example.invalid
+    volumes:
+      - test-data:/app/data
+volumes:
+  test-data:

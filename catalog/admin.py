@@ -1,12 +1,12 @@
 from django.contrib import admin
 
-from .models import Equipment, Exercise, ExerciseMuscle, MuscleGroup, Workout, WorkoutExercise
+from .models import Equipment, Exercise, ExerciseMuscle, MuscleGroup, TrainingGoal, Workout, WorkoutExercise
 
 
 @admin.register(MuscleGroup)
 class MuscleGroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'region')
-    list_filter = ('region',)
+    list_display = ('name', 'view', 'svg_file')
+    list_filter = ('view',)
     search_fields = ('name',)
 
 
@@ -14,6 +14,12 @@ class MuscleGroupAdmin(admin.ModelAdmin):
 class EquipmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'is_bodyweight', 'created_by')
     list_filter = ('category', 'is_bodyweight')
+    search_fields = ('name',)
+
+
+@admin.register(TrainingGoal)
+class TrainingGoalAdmin(admin.ModelAdmin):
+    list_display = ('name',)
     search_fields = ('name',)
 
 

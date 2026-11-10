@@ -1,0 +1,21 @@
+<script>
+document.querySelectorAll('[data-tab-card]').forEach(function (card) {
+  var tabBtns = card.querySelectorAll('[data-tab]');
+  var panels = card.querySelectorAll('.tab-panel');
+
+  function activate(tab) {
+    tabBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    panels.forEach(function (panel) {
+      panel.classList.toggle('active', panel.dataset.tabPanel === tab);
+    });
+  }
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () { activate(btn.dataset.tab); });
+  });
+
+  activate(card.dataset.initialTab);
+});
+</script>

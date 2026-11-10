@@ -1,16 +1,23 @@
 from rest_framework import serializers
 
+from accounts.models import display_name_for
+
 from .models import Equipment, Exercise, ExerciseMuscle, MuscleGroup, Workout, WorkoutExercise
+
+
+class CreatedByField(serializers.ReadOnlyField):
+    def to_representation(self, user):
+        return display_name_for(user)
 
 
 class MuscleGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = MuscleGroup
-        fields = ['id', 'name', 'region']
+        fields = ['id', 'name', 'view', 'svg_file']
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
-    created_by = serializers.ReadOnlyField(source='created_by.username')
+    created_by = CreatedByField()
 
     class Meta:
         model = Equipment
@@ -27,7 +34,7 @@ class ExerciseMuscleSerializer(serializers.ModelSerializer):
 
 
 class ExerciseSerializer(serializers.ModelSerializer):
-    created_by = serializers.ReadOnlyField(source='created_by.username')
+    created_by = CreatedByField()
     equipment = serializers.PrimaryKeyRelatedField(queryset=Equipment.objects.all(), many=True, required=False)
     exercise_muscles = ExerciseMuscleSerializer(many=True, required=False)
 
@@ -73,7 +80,7 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
 
 
 class WorkoutSerializer(serializers.ModelSerializer):
-    created_by = serializers.ReadOnlyField(source='created_by.username')
+    created_by = CreatedByField()
     workout_exercises = WorkoutExerciseSerializer(many=True, required=False)
 
     class Meta:

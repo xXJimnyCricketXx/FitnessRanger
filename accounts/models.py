@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -37,6 +38,7 @@ class UserData(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
+    display_name = models.CharField('Anzeigename', max_length=50, blank=True)
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -51,3 +53,64 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Profil von {self.user}'
+
+
+class UserSettings(models.Model):
+    class Language(models.TextChoices):
+        GERMAN = 'de', 'Deutsch'
+
+    class WeightUnit(models.TextChoices):
+        KG = 'kg', 'Kilogramm (kg)'
+        LB = 'lb', 'Pfund (lb)'
+
+    class LengthUnit(models.TextChoices):
+        CM = 'cm', 'Zentimeter (cm)'
+        FT_IN = 'ft_in', 'Fuß und Zoll (ft/in)'
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='settings')
+    language = models.CharField('Sprache', max_length=10, choices=Language.choices, default=Language.GERMAN)
+    weight_unit = models.CharField('Gewicht', max_length=5, choices=WeightUnit.choices, default=WeightUnit.KG)
+    length_unit = models.CharField('Größe und Maße', max_length=5, choices=LengthUnit.choices, default=LengthUnit.CM)
+
+    class Meta:
+        verbose_name_plural = 'User settings'
+
+    def __str__(self):
+        return f'Einstellungen von {self.user}'
+
+
+class SystemSettings(models.Model):
+    """Settings for the whole installation. There is always exactly one row."""
+
+    class Interval(models.IntegerChoices):
+        HOURS_6 = 6, 'Alle 6 Stunden'
+        HOURS_12 = 12, 'Alle 12 Stunden'
+        DAILY = 24, 'Täglich'
+        WEEKLY = 168, 'Wöchentlich'
+
+    auto_enabled = models.BooleanField('Automatische Backups', default=True)
+    interval_hours = models.PositiveIntegerField('Intervall', choices=Interval.choices, default=Interval.DAILY)
+    keep_count = models.PositiveIntegerField(
+        'Aufbewahren', default=7, validators=[MinValueValidator(1), MaxValueValidator(365)],
+    )
+    last_auto_at = models.DateTimeField(null=True, blank=True)
+    last_auto_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_auto_error = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name_plural = 'System settings'
+
+    def __str__(self):
+        return 'Systemeinstellungen'
+
+    @classmethod
+    def load(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+
+def display_name_for(user):
+    """The name shown to others: the display name if set, otherwise the username."""
+    try:
+        return user.profile.display_name or user.username
+    except Profile.DoesNotExist:
+        return user.username

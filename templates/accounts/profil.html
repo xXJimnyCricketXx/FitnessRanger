@@ -1,40 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Profil - FitnessRanger!{% endblock %}
+{% block main_class %}main-large{% endblock %}
 {% block content %}
 <h1 class="page-title">Profil</h1>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" class="profil-layout page-body">
   {% csrf_token %}
 
-  <div class="card form-section">
+  <div class="card form-section profil-avatar">
     <h2 class="section-title">Avatar</h2>
     <div class="avatar-preview">
       {% if profile.avatar %}
-      <img src="{{ profile.avatar.url }}" alt="{{ user.username }}">
+      <img src="{{ profile.avatar.url }}" alt="{{ display_name }}">
       {% else %}
-      <span class="avatar avatar-lg">{{ user.username|slice:":1"|upper }}</span>
+      <span class="avatar avatar-lg">{{ display_name|slice:":1"|upper }}</span>
       {% endif %}
     </div>
     <div class="field">
-      <label for="{{ avatar_form.avatar.id_for_label }}">Neues Bild hochladen</label>
-      {{ avatar_form.avatar }}
-      <span class="helptext">Ein neues Bild ersetzt dein bisheriges Avatar automatisch.</span>
-      {{ avatar_form.avatar.errors }}
+      <label for="{{ profile_form.avatar.id_for_label }}">Neues Bild hochladen</label>
+      {{ profile_form.avatar }}
+      <span class="helptext">Ein neues Bild ersetzt deinen bisherigen Avatar automatisch.</span>
+      {{ profile_form.avatar.errors }}
     </div>
+    {% if profile.avatar %}
+    <div class="checkbox-field">
+      {{ profile_form.remove_avatar }}
+      <label for="{{ profile_form.remove_avatar.id_for_label }}">Avatar entfernen</label>
+    </div>
+    {% endif %}
   </div>
 
+  <div class="profil-account">
   <div class="card form-section">
-    <h2 class="section-title">Benutzername</h2>
+    <h2 class="section-title">Konto</h2>
     <div class="field">
-      <label for="{{ username_form.username.id_for_label }}">Benutzername</label>
-      {{ username_form.username }}
-      {{ username_form.username.errors }}
+      <label for="{{ account_form.username.id_for_label }}">Benutzername</label>
+      {{ account_form.username }}
+      <span class="helptext">Damit meldest du dich an.</span>
+      {{ account_form.username.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ profile_form.display_name.id_for_label }}">Anzeigename (optional)</label>
+      {{ profile_form.display_name }}
+      <span class="helptext">Wird anderen statt deines Benutzernamens angezeigt.</span>
+      {{ profile_form.display_name.errors }}
+    </div>
+    <div class="field">
+      <label for="{{ account_form.email.id_for_label }}">E-Mail (optional)</label>
+      {{ account_form.email }}
+      <span class="helptext">Du kannst dich auch damit anmelden.</span>
+      {{ account_form.email.errors }}
     </div>
   </div>
 
   <div class="card form-section">
     <h2 class="section-title">Passwort</h2>
-    <span class="helptext">Nur ausfüllen, wenn du dein Passwort ändern möchtest.</span>
+    <span class="helptext profil-hint">Nur ausfüllen, wenn du dein Passwort ändern möchtest.</span>
     <div class="field">
       <label for="{{ password_form.old_password.id_for_label }}">Aktuelles Passwort</label>
       {{ password_form.old_password }}
@@ -52,6 +73,7 @@
     </div>
   </div>
 
-  <button type="submit" class="btn profil-save-btn">Speichern</button>
+  <button type="submit" class="btn form-submit-btn">Speichern</button>
+  </div>
 </form>
 {% endblock %}

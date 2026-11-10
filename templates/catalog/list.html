@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} - FitnessRanger!{% endblock %}
+{% block main_class %}main-full{% endblock %}
+{% block content %}
+<div class="list-header">
+  <h1 class="list-title">{{ page_title }}</h1>
+  <a href="{{ create_url }}" class="btn btn-compact">+ Neu</a>
+</div>
+
+<div class="list-tabs">
+  <a href="?filter=all" class="list-tab {% if active_filter == 'all' %}active{% endif %}">Alle {{ page_title }}</a>
+  <a href="?filter=mine" class="list-tab {% if active_filter == 'mine' %}active{% endif %}">Meine {{ page_title }}</a>
+</div>
+
+<div class="card-grid">
+  {% for item in items %}
+  {% include card_template with item=item %}
+  {% empty %}
+  <p class="empty-state">Noch keine Einträge vorhanden.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.row-toggle').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    btn.classList.toggle('expanded');
+    var panel = btn.nextElementSibling;
+    if (panel && panel.classList.contains('row-expandable')) panel.classList.toggle('expanded');
+  });
+});
+</script>
+{% endblock %}

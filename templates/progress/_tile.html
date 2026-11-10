@@ -1,0 +1,12 @@
+<div class="metric-tile">
+  {% if tile.trend %}
+  <span class="metric-trend trend-{{ tile.trend }}" role="img" aria-label="{% if tile.direction == 'up' %}Gestiegen{% elif tile.direction == 'down' %}Gesunken{% else %}Unverändert{% endif %}" title="{% if tile.direction == 'up' %}Gestiegen{% elif tile.direction == 'down' %}Gesunken{% else %}Unverändert{% endif %} seit {{ tile.previous_date|date:'d.m.Y' }}">
+    {% include "progress/_arrow.html" with dir=tile.direction %}
+  </span>
+  {% endif %}
+  <span class="metric-label">{{ tile.label }}</span>
+  <span class="metric-value">{{ tile.value }}{% if tile.unit %}<span class="metric-unit">{{ tile.unit }}</span>{% endif %}</span>
+  <span class="metric-rating">{% if tile.rating %}<span class="pill rating-{{ tile.rating.colour }}">{{ tile.rating.label }}</span>{% endif %}</span>
+  <span class="metric-change" {% if tile.previous_date %}title="Verglichen mit {{ tile.previous_date|date:'d.m.Y' }}"{% endif %}>{{ tile.change|default:"–" }}</span>
+  {% if tile.date != latest_date %}<span class="metric-date">Stand {{ tile.date|date:"d.m.Y" }}</span>{% endif %}
+</div>

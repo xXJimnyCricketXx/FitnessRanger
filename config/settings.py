@@ -78,6 +78,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processors.changelog_context',
+                'accounts.context_processors.account_context',
             ],
         },
     },
@@ -92,9 +93,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DJANGO_DB_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
+
+
+AUTHENTICATION_BACKENDS = ['accounts.backends.UsernameOrEmailBackend']
 
 
 # Password validation
@@ -136,7 +140,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media')
+
+BACKUP_DIR = os.environ.get('DJANGO_BACKUP_DIR', BASE_DIR / 'backups')
 
 
 # Default primary key field type

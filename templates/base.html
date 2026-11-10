@@ -22,27 +22,27 @@
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="6" height="6" rx="1"/><rect x="11.5" y="2.5" width="6" height="6" rx="1"/><rect x="2.5" y="11.5" width="6" height="6" rx="1"/><rect x="11.5" y="11.5" width="6" height="6" rx="1"/></svg>
         <span>Dashboard</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'uebungen-liste' %}" class="nav-item {% if request.resolver_match.url_name == 'uebungen-liste' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 10h12"/><rect x="1.5" y="7" width="3" height="6" rx="1"/><rect x="15.5" y="7" width="3" height="6" rx="1"/></svg>
         <span>Übungen</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'workouts-liste' %}" class="nav-item {% if request.resolver_match.url_name == 'workouts-liste' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="3" width="12" height="15" rx="1.5"/><path d="M7 9h6M7 12h6M7 15h4"/></svg>
         <span>Workouts</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'plaene-liste' %}" class="nav-item {% if request.resolver_match.url_name == 'plaene-liste' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="4" width="15" height="13" rx="1.5"/><path d="M2.5 8h15M6.5 2.5v3M13.5 2.5v3"/></svg>
         <span>Pläne</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'fortschritt' %}" class="nav-item {% if request.resolver_match.url_name|slice:":11" == 'fortschritt' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5,14 8,8.5 11.5,12 17.5,5"/><polyline points="12.5,5 17.5,5 17.5,10"/></svg>
         <span>Fortschritt</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'statistik' %}" class="nav-item {% if request.resolver_match.url_name == 'statistik' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 17V10M10 17V3M16 17v-7"/></svg>
         <span>Statistik</span>
       </a>
-      <a href="#" class="nav-item">
+      <a href="{% url 'tools' %}" class="nav-item {% if request.resolver_match.url_name == 'tools' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 3v14M10 3v14M16 3v14"/><circle cx="4" cy="9" r="1.8" fill="currentColor" stroke="none"/><circle cx="10" cy="13" r="1.8" fill="currentColor" stroke="none"/><circle cx="16" cy="6" r="1.8" fill="currentColor" stroke="none"/></svg>
         <span>Tools</span>
       </a>
@@ -61,11 +61,11 @@
       <div class="user-menu">
         <button type="button" class="user-menu-trigger" id="userMenuTrigger" aria-label="Benutzermenue">
           {% if user.profile.avatar %}
-          <span class="avatar"><img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}"></span>
+          <span class="avatar"><img src="{{ user.profile.avatar.url }}" alt="{{ display_name }}"></span>
           {% else %}
-          <span class="avatar">{{ user.username|slice:":1"|upper }}</span>
+          <span class="avatar">{{ display_name|slice:":1"|upper }}</span>
           {% endif %}
-          <span class="user-menu-name">{{ user.username }}</span>
+          <span class="user-menu-name">{{ display_name }}</span>
         </button>
         <div class="user-menu-dropdown" id="userMenuDropdown">
           <a href="{% url 'profil' %}" class="user-menu-item">
@@ -76,12 +76,12 @@
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="2.5" width="12" height="15" rx="1.5"/><path d="M7.5 6.5h5M7.5 9.5h5M7.5 12.5h3"/></svg>
             <span>Meine Daten</span>
           </a>
-          <a href="#" class="user-menu-item">
+          <a href="{% url 'einstellungen' %}" class="user-menu-item">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.2M10 15.3v2.2M17.5 10h-2.2M4.7 10H2.5M15.1 4.9l-1.5 1.5M6.4 13.6l-1.5 1.5M15.1 15.1l-1.5-1.5M6.4 6.4L4.9 4.9"/></svg>
             <span>Einstellungen</span>
           </a>
           {% if user.is_staff %}
-          <a href="{% url 'admin:index' %}" class="user-menu-item">
+          <a href="{% url 'admin:index' %}" class="user-menu-item" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10 2.5l6 2.3v4.7c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V4.8z"/></svg>
             <span>Adminbereich</span>
           </a>

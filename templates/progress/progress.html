@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Fortschritt - FitnessRanger!{% endblock %}
+{% block main_class %}main-full{% endblock %}
+{% block content %}
+<div class="list-header">
+  <h1 class="list-title">Fortschritt</h1>
+  <div class="list-header-actions">
+    <a href="{% url 'fortschritt-import' %}" class="btn btn-outline btn-compact">Importieren</a>
+    <a href="{% url 'fortschritt-masse' %}" class="btn btn-outline btn-compact">+ Körpermaße</a>
+    <a href="{% url 'fortschritt-gewicht' %}" class="btn btn-compact">+ Gewicht</a>
+  </div>
+</div>
+
+{% if not entries and not photo_days %}
+<p class="empty-state">Noch keine Einträge vorhanden. Trage dein Gewicht oder deine Körpermaße ein, oder importiere die Messungen deiner Waage.</p>
+{% else %}
+
+<div class="progress-top">
+  <div class="card progress-gauge-card">
+    <div class="progress-card-title">Gewichtstrend</div>
+    {% if weight_card %}
+    <div class="weight-now">
+      <span class="progress-current-value">{{ weight_card.value }}<span class="progress-current-unit">{{ weight_card.unit }}</span></span>
+      {% if weight_card.rating %}<span class="pill rating-{{ weight_card.rating.colour }}">{{ weight_card.rating.label }}</span>{% endif %}
+      <span class="progress-current-date">{{ weight_card.date|date:"d.m.Y" }}</span>
+    </div>
+    <div class="gauge-stats">
+      <div class="gauge-stat">
+        <span class="gauge-stat-value trend-{{ weight_card.last_trend }}">{{ weight_card.last_change|default:"–" }}{% if weight_card.last_change %}<span class="gauge-stat-unit">{{ weight_card.unit }}</span>{% endif %}</span>
+        <span class="gauge-stat-label">Letzte Änderung</span>
+      </div>
+      <div class="gauge-stat">
+        <span class="gauge-stat-value"{% if weight_card.finish_date %} title="Etwa {{ weight_card.finish_date|date:'F Y' }}"{% endif %}>{{ weight_card.finish|default:"–" }}</span>
+        <span class="gauge-stat-label">Vorauss. Abschluss</span>
+      </div>
+      <div class="gauge-stat">
+        <span class="gauge-stat-value trend-{{ weight_card.seven_trend }}">{{ weight_card.seven_change|default:"–" }}{% if weight_card.seven_change %}<span class="gauge-stat-unit">{{ weight_card.unit }}</span>{% endif %}</span>
+        <span class="gauge-stat-label">7-Tage-Änderung</span>
+      </div>
+    </div>
+    {% else %}
+    <p class="progress-compare-empty">Noch kein Gewicht eingetragen.</p>
+    {% endif %}
+  </div>
+
+  <div class="progress-side">
+  <div class="card progress-goal-card">
+    {% if goal_card %}
+    <div class="progress-card-title">{{ goal_card.title }}</div>
+
+    {% if goal_card.kind == 'weight' %}
+    <p class="goal-percent">Fortschritt <strong>{{ goal_card.percent }} %</strong>{% if goal_card.reached %} <span class="pill rating-green">Ziel erreicht</span>{% endif %}</p>
+    <div class="goal-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ goal_card.percent }}"><span style="width:{{ goal_card.percent }}%"></span></div>
+    <div class="goal-numbers">
+      <span>{{ goal_card.change_label }} <strong>{{ goal_card.change }}</strong> {{ goal_card.unit }}</span>
+      <span>Ziel <strong>{{ goal_card.target }}</strong> {{ goal_card.unit }}</span>
+    </div>
+    <p class="goal-start">Gerechnet ab Ausgangsgewicht {{ goal_card.start }} {{ goal_card.unit }}</p>
+
+    {% elif goal_card.kind == 'hold' %}
+    <p class="goal-percent">{% if goal_card.inside %}<span class="pill rating-green">Im Zielbereich</span>{% else %}<span class="pill rating-yellow">Außerhalb des Zielbereichs</span>{% endif %}</p>
+    <div class="goal-numbers">
+      <span>Abweichung <strong>{{ goal_card.deviation }}</strong> {{ goal_card.unit }}</span>
+      <span>Wunschgewicht <strong>{{ goal_card.target }}</strong> {{ goal_card.unit }} ± {{ goal_card.tolerance }}</span>
+    </div>
+    {% if goal_card.inside and goal_card.since %}<p class="goal-start">Im Zielbereich seit {{ goal_card.since|date:"d.m.Y" }}{% if goal_card.weeks %} ({{ goal_card.weeks }} Woche{{ goal_card.weeks|pluralize:"n" }}){% endif %}</p>{% endif %}
+
+    {% elif goal_card.kind == 'muscle' %}
+    {% if goal_card.current %}
+    {% if goal_card.percent is not None %}
+    <p class="goal-percent">Fortschritt <strong>{{ goal_card.percent }} %</strong>{% if goal_card.reached %} <span class="pill rating-green">Ziel erreicht</span>{% endif %}</p>
+    <div class="goal-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ goal_card.percent }}"><span style="width:{{ goal_card.percent }}%"></span></div>
+    {% endif %}
+    <div class="goal-numbers">
+      <span>Muskelmasse <strong class="trend-{{ goal_card.trend }}">{{ goal_card.change }}</strong> {{ goal_card.unit }}</span>
+      {% if goal_card.target %}<span>Ziel <strong>{{ goal_card.target }}</strong> {{ goal_card.unit }}</span>{% else %}<span>Aktuell <strong>{{ goal_card.current }}</strong> {{ goal_card.unit }}</span>{% endif %}
+    </div>
+    <p class="goal-start">Seit {{ goal_card.since|date:"d.m.Y" }}{% if not goal_card.target %}. Mit einer Ziel-Muskelmasse in <a href="{% url 'meine-daten' %}?tab=goal">Meine Daten</a> siehst du den Fortschritt in Prozent.{% endif %}</p>
+    {% elif goal_card.sizes %}
+    <div class="goal-numbers goal-sizes">
+      {% for size in goal_card.sizes %}<span>{{ size.label }} <strong class="trend-{{ size.trend }}">{{ size.change }}</strong> {{ goal_card.length_unit }}</span>{% endfor %}
+    </div>
+    <p class="goal-start">Seit der ersten Messung. Mit einer Körperanalysewaage siehst du hier deine Muskelmasse.</p>
+    {% else %}
+    <p class="progress-compare-empty">Trag Muskelmasse oder Körpermaße wie Oberarm, Brust und Oberschenkel ein, dann siehst du hier deinen Fortschritt.</p>
+    {% endif %}
+    {% if goal_card.weight_target %}<p class="goal-start">Zielgewicht {{ goal_card.weight_target }} {{ goal_card.unit }}, noch {{ goal_card.weight_left }} {{ goal_card.unit }}</p>{% endif %}
+
+    {% else %}
+    <p class="progress-compare-empty">{{ goal_card.text }}</p>
+    {% endif %}
+
+    {% else %}
+    <div class="progress-card-title">Ziel</div>
+    <p class="progress-compare-empty">Noch kein Ziel festgelegt. Wähl es in <a href="{% url 'meine-daten' %}?tab=goal">Meine Daten</a>, dann siehst du hier deinen Fortschritt.</p>
+    {% if since_start %}
+    <div class="progress-since">
+      <span>{{ since_start.label }} ({{ since_start.start }} {{ since_start.unit }})</span>
+      <strong class="trend-{{ since_start.trend }}">{{ since_start.change }} {{ since_start.unit }}</strong>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+<div class="card progress-compare-card">
+  {% if weight and weight.change %}
+  <div class="progress-compare-title">Verglichen mit {{ weight.previous_date|date:"d.m.Y" }}</div>
+  <div class="progress-compare-grid">
+    <div class="progress-compare-item">
+      <span class="progress-compare-label">Gewicht</span>
+      <span class="progress-compare-value trend-{{ weight.trend }}">{{ weight.change }}<span class="progress-compare-unit">{{ weight.unit }}</span></span>
+    </div>
+    {% for tile in compare %}
+    <div class="progress-compare-item">
+      <span class="progress-compare-label">{{ tile.label }}</span>
+      <span class="progress-compare-value trend-{{ tile.trend }}">{{ tile.change }}<span class="progress-compare-unit">{{ tile.unit }}</span></span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="progress-compare-title">Vergleich</div>
+  <p class="progress-compare-empty">Noch keine frühere Messung zum Vergleichen.</p>
+  {% endif %}
+</div>
+  </div>
+</div>
+
+<div data-tab-card data-initial-tab="{{ initial_tab }}">
+  <div class="list-tabs tools-tabs">
+    <button type="button" class="list-tab" data-tab="koerperwerte">Körperwerte</button>
+    <button type="button" class="list-tab" data-tab="koerpermasse">Körpermaße</button>
+    <button type="button" class="list-tab" data-tab="fotos">Fotos</button>
+    <button type="button" class="list-tab" data-tab="historie">Historie</button>
+  </div>
+
+  <div class="tab-panel" data-tab-panel="koerperwerte">
+    {% if missing_profile %}
+    <p class="progress-hint">Für alle Einstufungen braucht es Geburtstag, Geschlecht und Größe in <a href="{% url 'meine-daten' %}">Meine Daten</a>.</p>
+    {% endif %}
+    <div class="metric-grid">
+      {% for tile in body_tiles %}
+      {% include "progress/_tile.html" %}
+      {% empty %}
+      <p class="empty-state">Noch keine Körperwerte eingetragen.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="tab-panel" data-tab-panel="koerpermasse">
+    {% if measurement_table.rows %}
+    {% if waist and waist.rating %}<p class="progress-hint">Bauchumfang nach WHO: <span class="pill rating-{{ waist.rating.colour }}">{{ waist.rating.label }}</span></p>{% endif %}
+    <div class="table-wrap">
+      <table class="data-table measure-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            {% for column in measurement_table.columns %}<th>{{ column }} ({{ units.length_label }})</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in measurement_table.rows %}
+          <tr>
+            <td>{{ row.entry.date|date:"d.m.Y" }}</td>
+            {% for cell in row.cells %}
+            <td>{% if cell.value %}<span class="measure-cell">{{ cell.value }}{% if cell.trend %}<span class="measure-trend trend-{{ cell.trend }}" title="{{ cell.change }} {{ units.length_label }}">{% include "progress/_arrow.html" with dir=cell.direction size=13 %}</span>{% endif %}</span>{% else %}–{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-state">Noch keine Körpermaße eingetragen. Die Waage misst sie nicht, sie kommen über <a href="{% url 'fortschritt-masse' %}">+ Körpermaße</a> dazu.</p>
+    {% endif %}
+  </div>
+
+  <div class="tab-panel" data-tab-panel="fotos">
+    <div class="photos-toolbar">
+      <a href="{% url 'fortschritt-fotos-neu' %}" class="btn btn-compact">+ Fotos</a>
+      {% if photo_days %}<button type="button" class="btn btn-outline btn-compact" data-photos-toggle aria-pressed="false">Fotos anzeigen</button>{% endif %}
+    </div>
+    {% if photo_days %}
+    <div class="photos is-veiled" data-photos>
+      <div class="card photo-compare">
+        <div class="photo-compare-controls">
+          <div class="photo-pose-tabs" role="group" aria-label="Ansicht">
+            {% for value, label in poses %}<button type="button" class="photo-pose" data-pose="{{ value }}">{{ label }}</button>{% endfor %}
+          </div>
+          <label class="photo-compare-pick">Vorher <select data-compare="before"></select></label>
+          <label class="photo-compare-pick">Nachher <select data-compare="after"></select></label>
+        </div>
+        <div class="photo-compare-frames">
+          <figure class="photo-frame"><img data-compare-img="before" alt=""><figcaption data-compare-caption="before"></figcaption></figure>
+          <figure class="photo-frame"><img data-compare-img="after" alt=""><figcaption data-compare-caption="after"></figcaption></figure>
+        </div>
+        <p class="photo-compare-empty" data-compare-empty hidden>Für diese Ansicht gibt es noch kein Foto.</p>
+      </div>
+
+      <div class="photo-days">
+        {% for day in photo_days %}
+        <div class="photo-day">
+          <div class="photo-day-date">{{ day.date|date:"d.m.Y" }}</div>
+          <div class="photo-day-slots">
+            {% for slot in day.slots %}
+            <div class="photo-slot">
+              {% if slot.photo %}
+              <img src="{% url 'fortschritt-foto' slot.photo.pk %}" alt="{{ slot.label }} am {{ day.date|date:'d.m.Y' }}" loading="lazy">
+              <form method="post" action="{% url 'fortschritt-foto-loeschen' slot.photo.pk %}" data-confirm="Foto {{ slot.label }} vom {{ day.date|date:'d.m.Y' }} wirklich löschen?">
+                {% csrf_token %}
+                <button type="submit" class="photo-delete" aria-label="Foto {{ slot.label }} löschen">&times;</button>
+              </form>
+              {% else %}
+              <span class="photo-slot-empty">–</span>
+              {% endif %}
+              <span class="photo-slot-label">{{ slot.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {{ photo_compare|json_script:"photo-compare-data" }}
+    {% else %}
+    <p class="empty-state">Noch keine Fotos. Mit „+ Fotos“ legst du Bilder von vorne, von der Seite und von hinten an. Die Fotos siehst nur du.</p>
+    {% endif %}
+  </div>
+
+  <div class="tab-panel" data-tab-panel="historie">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Gewicht ({{ units.weight_label }})</th>
+            <th>Körperfett (%)</th>
+            <th>Muskelmasse ({{ units.weight_label }})</th>
+            <th>Körpermaße</th>
+            <th>Quelle</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+          <tr>
+            <td>{{ row.entry.date|date:"d.m.Y" }}</td>
+            <td>{{ row.weight|default:"–" }}</td>
+            <td>{{ row.body_fat|default:"–" }}</td>
+            <td>{{ row.muscle|default:"–" }}</td>
+            <td>{{ row.measurements|default:"–" }}</td>
+            <td>{{ row.source }}</td>
+            <td class="data-table-actions">
+              <a href="{% url 'fortschritt-bearbeiten' row.entry.pk %}" class="btn btn-outline btn-small">Bearbeiten</a>
+              <form method="post" action="{% url 'fortschritt-loeschen' row.entry.pk %}" data-confirm="Eintrag vom {{ row.entry.date|date:'d.m.Y' }} wirklich löschen?">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-small">Löschen</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+{% include "accounts/_tabs_script.html" %}
+<script>
+(function () {
+  var data = document.getElementById('photo-compare-data');
+  var box = document.querySelector('[data-photos]');
+  if (!data || !box) return;
+  var photos = JSON.parse(data.textContent);
+  var toggle = document.querySelector('[data-photos-toggle]');
+  toggle.addEventListener('click', function () {
+    var veiled = box.classList.toggle('is-veiled');
+    toggle.textContent = veiled ? 'Fotos anzeigen' : 'Fotos verbergen';
+    toggle.setAttribute('aria-pressed', String(!veiled));
+  });
+
+  var pose = 'vorne';
+  var selects = {before: box.querySelector('[data-compare="before"]'), after: box.querySelector('[data-compare="after"]')};
+  var empty = box.querySelector('[data-compare-empty]');
+  var frames = box.querySelector('.photo-compare-frames');
+
+  function label(iso) {
+    var parts = iso.split('-');
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+  }
+  function show(which) {
+    var iso = selects[which].value;
+    var img = box.querySelector('[data-compare-img="' + which + '"]');
+    if (iso) img.src = photos[iso][pose]; else img.removeAttribute('src');
+    img.alt = iso ? 'Foto vom ' + label(iso) : '';
+    box.querySelector('[data-compare-caption="' + which + '"]').textContent = iso ? label(iso) : '';
+  }
+  function fill() {
+    var dates = Object.keys(photos).filter(function (iso) { return photos[iso][pose]; }).sort();
+    empty.hidden = dates.length > 0;
+    frames.hidden = dates.length === 0;
+    ['before', 'after'].forEach(function (which) {
+      var select = selects[which];
+      select.innerHTML = '';
+      dates.forEach(function (iso) {
+        var option = document.createElement('option');
+        option.value = iso;
+        option.textContent = label(iso);
+        select.appendChild(option);
+      });
+      select.disabled = dates.length === 0;
+    });
+    if (dates.length) {
+      selects.before.value = dates[0];
+      selects.after.value = dates[dates.length - 1];
+    }
+    show('before');
+    show('after');
+    box.querySelectorAll('[data-pose]').forEach(function (button) {
+      button.classList.toggle('active', button.dataset.pose === pose);
+      button.setAttribute('aria-pressed', String(button.dataset.pose === pose));
+    });
+  }
+  box.querySelectorAll('[data-pose]').forEach(function (button) {
+    button.addEventListener('click', function () { pose = button.dataset.pose; fill(); });
+  });
+  selects.before.addEventListener('change', function () { show('before'); });
+  selects.after.addEventListener('change', function () { show('after'); });
+  fill();
+})();
+
+document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+  form.addEventListener('submit', function (event) {
+    if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

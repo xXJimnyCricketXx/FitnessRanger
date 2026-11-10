@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Statistik - FitnessRanger!{% endblock %}
+{% block main_class %}main-full{% endblock %}
+{% block content %}
+<div class="list-header">
+  <h1 class="list-title">Statistik</h1>
+</div>
+
+{% if not has_entries %}
+<p class="empty-state">Noch keine Messungen. Sobald du in <a href="{% url 'fortschritt' %}">Fortschritt</a> dein Gewicht oder deine Körpermaße einträgst oder importierst, siehst du hier den Verlauf.</p>
+{% else %}
+
+<nav class="period-tabs" aria-label="Zeitraum">
+  {% for key, label, days in periods %}
+  <a href="?zeitraum={{ key }}" class="period-tab{% if key == period %} active{% endif %}"{% if key == period %} aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+
+{# ---------- Gewicht ---------- #}
+<h2 class="stat-section-title">Gewicht</h2>
+{% if tiles %}
+<div class="stat-tiles">
+  <div class="metric-tile">
+    {% if tiles.change %}<span class="metric-trend trend-{{ tiles.change.trend }}">{% include "progress/_arrow.html" with dir=tiles.change.direction %}</span>{% endif %}
+    <span class="metric-label">Veränderung</span>
+    <span class="metric-value">{{ tiles.change.value|default:"–" }}{% if tiles.change %}<span class="metric-unit">{{ unit }}</span>{% endif %}</span>
+    <span class="metric-date">{{ tiles.first_date|date:"d.m.Y" }} – {{ tiles.last_date|date:"d.m.Y" }}</span>
+  </div>
+  <div class="metric-tile">
+    {% if tiles.per_week %}<span class="metric-trend trend-{{ tiles.per_week.trend }}">{% include "progress/_arrow.html" with dir=tiles.per_week.direction %}</span>{% endif %}
+    <span class="metric-label">Ø pro Woche</span>
+    <span class="metric-value">{{ tiles.per_week.value|default:"–" }}{% if tiles.per_week %}<span class="metric-unit">{{ unit }}</span>{% endif %}</span>
+    <span class="metric-date">{% if tiles.per_week %}über {{ tiles.span }}{% else %}braucht mindestens eine Woche{% endif %}</span>
+  </div>
+  <div class="metric-tile">
+    <span class="metric-label">Tiefstwert</span>
+    <span class="metric-value">{{ tiles.lowest.value }}<span class="metric-unit">{{ unit }}</span></span>
+    <span class="metric-date">{{ tiles.lowest.date|date:"d.m.Y" }}</span>
+  </div>
+  <div class="metric-tile">
+    <span class="metric-label">Höchstwert</span>
+    <span class="metric-value">{{ tiles.highest.value }}<span class="metric-unit">{{ unit }}</span></span>
+    <span class="metric-date">{{ tiles.highest.date|date:"d.m.Y" }}</span>
+  </div>
+  <div class="metric-tile">
+    <span class="metric-label">Messungen</span>
+    <span class="metric-value">{{ tiles.count }}</span>
+    <span class="metric-date">im Zeitraum</span>
+  </div>
+</div>
+
+<div class="card stat-chart-card">
+  <div class="stat-chart-head">
+    <h3 class="progress-card-title">Gewichtsverlauf</h3>
+    <div class="stat-legend" data-weight-legend></div>
+  </div>
+  <div class="stat-chart">
+    <canvas id="weight-chart" role="img" aria-label="Gewichtsverlauf {{ period_label }}"></canvas>
+  </div>
+  <p class="stat-note" data-weight-outside hidden></p>
+</div>
+{{ chart|json_script:"weight-chart-data" }}
+{% else %}
+<p class="stat-empty">{% if has_weighings %}Im Zeitraum „{{ period_label }}“ gibt es kein Gewicht.{% else %}Noch kein Gewicht eingetragen.{% endif %}</p>
+{% endif %}
+
+{# ---------- Körperzusammensetzung ---------- #}
+<h2 class="stat-section-title">Körperzusammensetzung</h2>
+{% if composition %}
+<div class="card stat-chart-card" data-composition>
+  <div class="stat-chart-head">
+    <label class="stat-select">
+      <span class="visually-hidden">Wert</span>
+      <select data-composition-select>
+        {% for series in composition %}<option value="{{ series.key }}"{% if series.key == composition_default %} selected{% endif %}>{{ series.label }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="stat-summary" data-composition-summary></div>
+  </div>
+  <div class="stat-chart">
+    <canvas id="composition-chart" role="img" aria-label="Körperzusammensetzung {{ period_label }}"></canvas>
+  </div>
+  <div class="stat-legend stat-band-legend" data-composition-bands></div>
+</div>
+{{ composition|json_script:"composition-data" }}
+{% else %}
+<p class="stat-empty">Im Zeitraum „{{ period_label }}“ gibt es keine Werte einer Körperanalysewaage.</p>
+{% endif %}
+
+{# ---------- Körpermaße ---------- #}
+<h2 class="stat-section-title">Körpermaße</h2>
+{% if measurements %}
+<div class="card stat-chart-card" data-measurements>
+  <div class="measure-chips" role="group" aria-label="Maße einblenden">
+    {% for series in measurements %}
+    <button type="button" class="measure-chip" data-measure="{{ series.key }}" aria-pressed="{% if series.key in measurement_default %}true{% else %}false{% endif %}">
+      <span class="measure-chip-dot"></span>
+      <span class="measure-chip-label">{{ series.label }}</span>
+      <span class="measure-chip-value">{{ series.latest }} {{ series.unit }}</span>
+      {% if series.change %}<span class="measure-chip-change trend-{{ series.trend }}" title="Seit {{ series.first_date|date:'d.m.Y' }}">{{ series.change }}</span>{% endif %}
+    </button>
+    {% endfor %}
+  </div>
+  <div class="stat-chart">
+    <canvas id="measurement-chart" role="img" aria-label="Körpermaße {{ period_label }}"></canvas>
+  </div>
+  <p class="stat-note" data-measurement-empty hidden>Wähle oben mindestens ein Maß aus.</p>
+</div>
+{{ measurements|json_script:"measurement-data" }}
+{% else %}
+<p class="stat-empty">Im Zeitraum „{{ period_label }}“ gibt es keine Körpermaße.</p>
+{% endif %}
+
+{# ---------- Übersicht ---------- #}
+<div class="stat-section-head">
+  <h2 class="stat-section-title">Übersicht</h2>
+  <div class="stat-toggle" role="group" aria-label="Einteilung">
+    <button type="button" class="period-tab{% if overview_default == 'woche' %} active{% endif %}" data-overview-unit="woche" aria-pressed="{% if overview_default == 'woche' %}true{% else %}false{% endif %}">Wochen</button>
+    <button type="button" class="period-tab{% if overview_default == 'monat' %} active{% endif %}" data-overview-unit="monat" aria-pressed="{% if overview_default == 'monat' %}true{% else %}false{% endif %}">Monate</button>
+  </div>
+</div>
+{% for unit_key, table in overview.items %}
+<div class="card stat-table-card" data-overview="{{ unit_key }}"{% if unit_key != overview_default %} hidden{% endif %}>
+  {% if table.rows %}
+  <div class="table-wrap">
+    <table class="data-table stat-table">
+      <thead>
+        <tr>
+          <th>{% if unit_key == 'woche' %}Woche{% else %}Monat{% endif %}</th>
+          {% for column in table.columns %}<th>{{ column.label }}{% if column.unit %} ({{ column.unit }}){% endif %}</th>{% endfor %}
+          <th>Messtage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table.rows %}
+        <tr>
+          <td class="stat-table-period">
+            {% if unit_key == 'woche' %}
+            <span>KW {{ row.start|date:"W" }}</span><span class="stat-table-dates">{{ row.start|date:"d.m." }} – {{ row.end|date:"d.m.Y" }}</span>
+            {% else %}
+            <span>{{ row.start|date:"F Y" }}</span>
+            {% endif %}
+          </td>
+          {% for cell in row.cells %}
+          <td>
+            {% if cell.value %}
+            <span class="measure-value">{{ cell.value }}</span>
+            {% if cell.change %}<span class="measure-change trend-{{ cell.trend }}" title="Gegenüber {% if unit_key == 'woche' %}KW {{ cell.compared|date:'W' }}{% else %}{{ cell.compared|date:'F Y' }}{% endif %}">{% include "progress/_arrow.html" with dir=cell.direction size=12 %}{{ cell.change }}</span>{% endif %}
+            {% else %}<span class="measure-empty">–</span>{% endif %}
+          </td>
+          {% endfor %}
+          <td>{{ row.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="stat-note">Durchschnitt aller Messungen {% if unit_key == 'woche' %}der Woche{% else %}des Monats{% endif %}, verglichen mit {% if unit_key == 'woche' %}der letzten Woche{% else %}dem letzten Monat{% endif %} mit einem Wert.</p>
+  {% else %}
+  <p class="stat-empty">Im Zeitraum „{{ period_label }}“ gibt es keine Messungen.</p>
+  {% endif %}
+</div>
+{% endfor %}
+
+{# ---------- Training ---------- #}
+<h2 class="stat-section-title">Training</h2>
+<div class="card stat-placeholder">
+  <p class="settings-text">Trainings pro Woche, Volumen und Bestwerte erscheinen hier, sobald du Workouts protokollierst.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if tiles or composition or measurements %}
+<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+{% endif %}
+{% if has_entries %}
+<script>
+(function () {
+  var css = getComputedStyle(document.documentElement);
+  var colour = function (name) { return css.getPropertyValue(name).trim(); };
+  var RED = colour('--red'), GOLD = colour('--gold'), TEXT = colour('--text'),
+      DIM = colour('--text-dim'), FAINT = colour('--text-faint'), GRID = colour('--card-border');
+  var RATING = {
+    'blue-dark': '#2F6FBF', 'blue': '#4AA3DF', 'green': '#2FBF8F', 'green-light': '#9BD67A',
+    'green-dark': '#1c8f68', 'yellow': GOLD, 'red': RED,
+  };
+  var SERIES = ['#E4342B', '#F2C14E', '#2FBF8F', '#4AA3DF', '#B48CE0', '#F28C38', '#E86FA6', '#C9C6BF', '#3CC4D6'];
+  var DAY = 86400000;
+
+  function day(iso) {
+    var p = iso.split('-');
+    return Date.UTC(+p[0], +p[1] - 1, +p[2]);
+  }
+  function dateLabel(ms, withYear) {
+    var d = new Date(ms);
+    var text = String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '.';
+    return withYear ? text + d.getUTCFullYear() : text;
+  }
+  function number(value, digits) {
+    return value.toLocaleString('de-DE', {minimumFractionDigits: digits, maximumFractionDigits: digits});
+  }
+  function withAlpha(hex, alpha) {
+    var n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+  // Round the axis to a tidy step so it starts and ends on a labelled line.
+  // At least about 2 % of the value from top to bottom, so a small change does not look like a fall.
+  function tidyAxis(values) {
+    var low = Math.min.apply(null, values), high = Math.max.apply(null, values);
+    var middle = (low + high) / 2;
+    var minSpan = Math.max(Math.abs(middle) * 0.02, 0.4);
+    if (high - low < minSpan) { low = middle - minSpan / 2; high = middle + minSpan / 2; }
+    var step = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500].find(function (s) { return (high - low) / s <= 5; }) || 1000;
+    var min = Math.floor(low / step + 1e-9) * step, max = Math.ceil(high / step - 1e-9) * step;
+    // Keep points off the very edge, where they would be cut in half.
+    if (low - min < step * 0.25) min -= step;
+    if (max - high < step * 0.25) max += step;
+    return {min: +min.toFixed(4), max: +max.toFixed(4), step: step};
+  }
+  // A little room left and right so the first and last point are not cut in half.
+  function xRange(allX) {
+    var first = Math.min.apply(null, allX), last = Math.max.apply(null, allX);
+    if (first === last) { first -= 3 * DAY; last += 3 * DAY; }
+    var pad = (last - first) * 0.02;
+    return {min: first - pad, max: last + pad, years: new Date(first).getUTCFullYear() !== new Date(last).getUTCFullYear()};
+  }
+  function legendInto(box, items) {
+    box.innerHTML = '';
+    items.forEach(function (item) {
+      var entry = document.createElement('span');
+      entry.className = 'stat-legend-item';
+      var mark = document.createElement('span');
+      mark.className = 'stat-legend-mark is-' + item.kind;
+      mark.style.setProperty('--mark', item.colour);
+      entry.appendChild(mark);
+      entry.appendChild(document.createTextNode(item.label));
+      box.appendChild(entry);
+    });
+  }
+  // Rating areas behind the lines.
+  var bandPlugin = {
+    id: 'ratingBands',
+    beforeDatasetsDraw: function (chart, args, options) {
+      if (!options.bands) return;
+      var area = chart.chartArea, y = chart.scales.y, ctx = chart.ctx;
+      ctx.save();
+      options.bands.forEach(function (band) {
+        var top = band.high === null ? area.top : Math.max(area.top, y.getPixelForValue(band.high));
+        var bottom = band.low === null ? area.bottom : Math.min(area.bottom, y.getPixelForValue(band.low));
+        if (bottom <= top) return;
+        ctx.fillStyle = withAlpha(RATING[band.colour] || DIM, 0.13);
+        ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
+      });
+      ctx.restore();
+    },
+  };
+  function baseOptions(x, y, unit, digits) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {mode: 'nearest', intersect: false, axis: 'x'},
+      scales: {
+        x: {
+          type: 'linear', min: x.min, max: x.max,
+          grid: {color: GRID}, border: {color: GRID},
+          ticks: {color: DIM, maxTicksLimit: 7, maxRotation: 0, callback: function (v) { return dateLabel(v, x.years); }},
+        },
+        y: {
+          min: y.min, max: y.max,
+          grid: {color: GRID}, border: {color: GRID},
+          ticks: {color: DIM, stepSize: y.step, callback: function (v) { return v.toLocaleString('de-DE', {maximumFractionDigits: 1}); }},
+        },
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          filter: function (item) { return !item.dataset.isReference; },
+          backgroundColor: '#0f0f0f', borderColor: GRID, borderWidth: 1, titleColor: TEXT, bodyColor: TEXT,
+          callbacks: {
+            title: function (items) { return items.length ? dateLabel(items[0].parsed.x, true) : ''; },
+            label: function (item) {
+              var d = item.dataset.digits !== undefined ? item.dataset.digits : digits;
+              var u = item.dataset.unit !== undefined ? item.dataset.unit : unit;
+              return item.dataset.label + ': ' + number(item.parsed.y, d) + (u ? ' ' + u : '');
+            },
+          },
+        },
+      },
+    };
+  }
+  // Long pauses between measurements are drawn dashed: the line there is only a guess.
+  function gapSegments(gaps) {
+    return {borderDash: function (ctx) { return gaps.indexOf(ctx.p0DataIndex) !== -1 ? [4, 5] : undefined; }};
+  }
+
+  // ---------- Gewicht ----------
+  var weightData = document.getElementById('weight-chart-data');
+  if (weightData) {
+    var data = JSON.parse(weightData.textContent);
+    var points = data.points.map(function (p) { return {x: day(p.x), y: p.y}; });
+    // A gap of more than two weeks breaks the average line instead of drawing across it.
+    var average = [];
+    points.forEach(function (p, i) {
+      average.push({x: p.x, y: data.average[i]});
+      if (data.gaps.indexOf(i) !== -1) average.push({x: p.x + 1, y: null});
+    });
+    var x = xRange(points.map(function (p) { return p.x; }));
+    var values = points.map(function (p) { return p.y; });
+    if (data.band) values.push(data.band.low, data.band.high);
+    var y = tidyAxis(values);
+
+    var datasets = [];
+    var legend = [{label: 'Messung', colour: DIM, kind: 'dot'}, {label: '7-Tage-Schnitt', colour: RED, kind: 'line'}];
+    var outside = [];
+    var options = baseOptions(x, y, data.unit, data.digits);
+    if (data.band) {
+      options.plugins.ratingBands = {bands: [{low: data.band.low, high: data.band.high, colour: 'green'}]};
+      legend.push({label: data.band.label, colour: withAlpha(RATING.green, 0.6), kind: 'box'});
+    }
+    data.lines.forEach(function (line) {
+      var lineColour = line.kind === 'target' ? GOLD : FAINT;
+      var text = line.label + ' ' + number(line.y, data.digits) + ' ' + data.unit;
+      if (line.y < y.min || line.y > y.max) { outside.push(text); return; }
+      datasets.push({
+        label: line.label, isReference: true, data: [{x: x.min, y: line.y}, {x: x.max, y: line.y}],
+        borderColor: lineColour, borderWidth: 1.5, borderDash: [6, 5], pointRadius: 0, pointHitRadius: 0, order: 4,
+      });
+      legend.push({label: text, colour: lineColour, kind: 'dash'});
+    });
+    datasets.push({
+      label: '7-Tage-Schnitt', data: average, borderColor: RED, borderWidth: 2.5, pointRadius: 0,
+      pointHitRadius: 0, tension: 0.3, spanGaps: false, order: 2,
+    });
+    datasets.push({
+      label: 'Messung', data: points, showLine: false, pointRadius: points.length > 120 ? 2 : 3.5,
+      pointHoverRadius: 6, pointBackgroundColor: DIM, pointBorderColor: DIM, order: 1,
+    });
+    legendInto(document.querySelector('[data-weight-legend]'), legend);
+    if (outside.length) {
+      var note = document.querySelector('[data-weight-outside]');
+      note.textContent = 'Außerhalb des Ausschnitts: ' + outside.join(', ') + '.';
+      note.hidden = false;
+    }
+    new Chart(document.getElementById('weight-chart'), {type: 'line', data: {datasets: datasets}, options: options, plugins: [bandPlugin]});
+  }
+
+  // ---------- Körperzusammensetzung ----------
+  var compositionData = document.getElementById('composition-data');
+  if (compositionData) {
+    var all = JSON.parse(compositionData.textContent);
+    var byKey = {};
+    all.forEach(function (series) { byKey[series.key] = series; });
+    var select = document.querySelector('[data-composition-select]');
+    var summary = document.querySelector('[data-composition-summary]');
+    var bandBox = document.querySelector('[data-composition-bands]');
+    var compositionChart = null;
+
+    function summaryHtml(series) {
+      var box = document.createElement('div');
+      var now = document.createElement('span');
+      now.className = 'stat-summary-value';
+      now.textContent = series.latest + (series.unit ? ' ' + series.unit : '');
+      box.appendChild(now);
+      if (series.rating) {
+        var pill = document.createElement('span');
+        pill.className = 'pill rating-' + series.rating.colour;
+        pill.textContent = series.rating.label;
+        box.appendChild(pill);
+      }
+      if (series.change) {
+        var change = document.createElement('span');
+        change.className = 'stat-summary-change trend-' + series.trend;
+        change.textContent = series.change + (series.unit ? ' ' + series.unit : '') + ' im Zeitraum';
+        box.appendChild(change);
+      }
+      return box;
+    }
+
+    function drawComposition() {
+      var series = byKey[select.value];
+      var pts = series.points.map(function (p) { return {x: day(p.x), y: p.y}; });
+      var x = xRange(pts.map(function (p) { return p.x; }));
+      var y = tidyAxis(pts.map(function (p) { return p.y; }));
+      var options = baseOptions(x, y, series.unit, series.digits);
+      options.plugins.ratingBands = {bands: series.bands};
+      summary.replaceChildren(summaryHtml(series));
+      legendInto(bandBox, (series.bands || []).map(function (band) {
+        return {label: band.label, colour: withAlpha(RATING[band.colour] || DIM, 0.7), kind: 'box'};
+      }));
+      bandBox.hidden = !series.bands;
+      var dataset = {
+        label: series.label, data: pts, borderColor: RED, borderWidth: 2.5, tension: 0.25,
+        pointRadius: pts.length > 120 ? 2 : 3.5, pointHoverRadius: 6, pointBackgroundColor: RED,
+        segment: gapSegments(series.gaps),
+      };
+      if (compositionChart) compositionChart.destroy();
+      compositionChart = new Chart(document.getElementById('composition-chart'), {
+        type: 'line', data: {datasets: [dataset]}, options: options, plugins: [bandPlugin],
+      });
+    }
+    select.addEventListener('change', drawComposition);
+    drawComposition();
+  }
+
+  // ---------- Körpermaße ----------
+  var measurementData = document.getElementById('measurement-data');
+  if (measurementData) {
+    var measures = JSON.parse(measurementData.textContent);
+    var chips = document.querySelectorAll('[data-measure]');
+    var emptyNote = document.querySelector('[data-measurement-empty]');
+    var canvas = document.getElementById('measurement-chart');
+    var measurementChart = null;
+    measures.forEach(function (series, i) { series.colour = SERIES[i % SERIES.length]; });
+    chips.forEach(function (chip, i) { chip.style.setProperty('--chip', measures[i].colour); });
+
+    function drawMeasurements() {
+      var chosen = measures.filter(function (series, i) { return chips[i].getAttribute('aria-pressed') === 'true'; });
+      if (measurementChart) { measurementChart.destroy(); measurementChart = null; }
+      emptyNote.hidden = chosen.length > 0;
+      canvas.parentNode.hidden = chosen.length === 0;
+      if (!chosen.length) return;
+      var datasets = chosen.map(function (series) {
+        var pts = series.points.map(function (p) { return {x: day(p.x), y: p.y}; });
+        return {
+          label: series.label, data: pts, unit: series.unit, digits: series.digits,
+          borderColor: series.colour, backgroundColor: series.colour, borderWidth: 2.5, tension: 0.25,
+          pointRadius: 3.5, pointHoverRadius: 6, segment: gapSegments(series.gaps),
+        };
+      });
+      var allX = [], allY = [];
+      datasets.forEach(function (d) { d.data.forEach(function (p) { allX.push(p.x); allY.push(p.y); }); });
+      var x = xRange(allX), y = tidyAxis(allY);
+      measurementChart = new Chart(canvas, {
+        type: 'line', data: {datasets: datasets}, options: baseOptions(x, y, chosen[0].unit, chosen[0].digits),
+      });
+    }
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chip.setAttribute('aria-pressed', String(chip.getAttribute('aria-pressed') !== 'true'));
+        drawMeasurements();
+      });
+    });
+    drawMeasurements();
+  }
+
+  // ---------- Übersicht ----------
+  document.querySelectorAll('[data-overview-unit]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var unit = button.dataset.overviewUnit;
+      document.querySelectorAll('[data-overview-unit]').forEach(function (other) {
+        var active = other === button;
+        other.classList.toggle('active', active);
+        other.setAttribute('aria-pressed', String(active));
+      });
+      document.querySelectorAll('[data-overview]').forEach(function (table) {
+        table.hidden = table.dataset.overview !== unit;
+      });
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

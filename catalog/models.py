@@ -3,14 +3,20 @@ from django.db import models
 
 
 class MuscleGroup(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    region = models.CharField(max_length=100)
+    class View(models.TextChoices):
+        FRONT = 'front', 'Vorderseite'
+        BACK = 'back', 'Rückseite'
+
+    name = models.CharField(max_length=100)
+    view = models.CharField(max_length=10, choices=View.choices)
+    svg_file = models.CharField(max_length=255)
 
     class Meta:
-        ordering = ['region', 'name']
+        ordering = ['view', 'name']
+        unique_together = ('name', 'view')
 
     def __str__(self):
-        return self.name
+        return f'{self.name} ({self.get_view_display()})'
 
 
 class Equipment(models.Model):
@@ -39,6 +45,16 @@ class Equipment(models.Model):
         return self.name
 
 
+class TrainingGoal(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Exercise(models.Model):
     class Difficulty(models.TextChoices):
         BEGINNER = 'anfaenger', 'Anfänger'
@@ -61,10 +77,12 @@ class Exercise(models.Model):
         NONE = 'keiner', 'Keiner'
 
     name = models.CharField(max_length=150)
+    image = models.ImageField(upload_to='exercises/%Y/%m/', null=True, blank=True)
     muscle_groups = models.ManyToManyField(
         MuscleGroup, through='ExerciseMuscle', related_name='exercises'
     )
     equipment = models.ManyToManyField(Equipment, related_name='exercises', blank=True)
+    goals = models.ManyToManyField(TrainingGoal, related_name='exercises', blank=True)
     instructions = models.TextField(blank=True)
     video_url = models.URLField(blank=True)
     difficulty = models.CharField(max_length=20, choices=Difficulty.choices)

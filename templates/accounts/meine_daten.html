@@ -4,17 +4,17 @@
 {% block content %}
 <h1 class="page-title">Meine Daten</h1>
 
-<div class="card" id="meineDatenCard" data-initial-tab="{{ initial_tab }}">
+<div class="card page-body" data-tab-card data-initial-tab="{{ initial_tab }}">
   <div class="tabs">
     <button type="button" class="tab-btn" data-tab="personal">Persönliche Daten</button>
     <button type="button" class="tab-btn" data-tab="goal">Ziel</button>
     <button type="button" class="tab-btn" data-tab="equipment">Ausrüstung</button>
   </div>
 
-  <form method="post" novalidate>
-    {% csrf_token %}
-
-    <div class="tab-panel" data-tab-panel="personal">
+  <div class="tab-panel" data-tab-panel="personal">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="section" value="personal">
       <div class="field">
         <label for="{{ user_data_form.birth_date.id_for_label }}">Geburtstag</label>
         {{ user_data_form.birth_date }}
@@ -26,12 +26,12 @@
         {{ user_data_form.gender.errors }}
       </div>
       <div class="field">
-        <label for="{{ user_data_form.height_cm.id_for_label }}">Größe (cm)</label>
+        <label for="{{ user_data_form.height_cm.id_for_label }}">Größe ({{ units.length_label }})</label>
         {{ user_data_form.height_cm }}
         {{ user_data_form.height_cm.errors }}
       </div>
       <div class="field">
-        <label for="{{ user_data_form.starting_weight_kg.id_for_label }}">Ausgangsgewicht (kg)</label>
+        <label for="{{ user_data_form.starting_weight_kg.id_for_label }}">Ausgangsgewicht ({{ units.weight_label }})</label>
         {{ user_data_form.starting_weight_kg }}
         <span class="helptext">Einmalig gesetzter Referenzwert für deine Fortschritts-Statistik, wird nicht automatisch durch spätere Waage-Werte überschrieben.</span>
         {{ user_data_form.starting_weight_kg.errors }}
@@ -46,27 +46,49 @@
         {{ user_data_form.activity_level }}
         {{ user_data_form.activity_level.errors }}
       </div>
-    </div>
+      <button type="submit" class="btn section-save">Speichern</button>
+    </form>
+  </div>
 
-    <div class="tab-panel" data-tab-panel="goal">
+  <div class="tab-panel" data-tab-panel="goal">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="section" value="goal">
       <div class="field">
         <label for="{{ goal_form.goal_type.id_for_label }}">Zieltyp</label>
         {{ goal_form.goal_type }}
         {{ goal_form.goal_type.errors }}
       </div>
-      <div class="field">
-        <label for="{{ goal_form.target_weight_kg.id_for_label }}">Zielgewicht (kg, optional)</label>
+      <div class="field" data-goal-for="muskelaufbau">
+        <label for="{{ goal_form.target_muscle_mass_kg.id_for_label }}">Ziel-Muskelmasse ({{ units.weight_label }})</label>
+        {{ goal_form.target_muscle_mass_kg }}
+        {{ goal_form.target_muscle_mass_kg.errors }}
+      </div>
+      <div class="field" data-goal-for="abnehmen halten muskelaufbau">
+        <label for="{{ goal_form.target_weight_kg.id_for_label }}" data-label-abnehmen="Zielgewicht ({{ units.weight_label }})" data-label-halten="Wunschgewicht ({{ units.weight_label }})" data-label-muskelaufbau="Zielgewicht ({{ units.weight_label }}, optional)">Zielgewicht ({{ units.weight_label }})</label>
         {{ goal_form.target_weight_kg }}
         {{ goal_form.target_weight_kg.errors }}
       </div>
-      <div class="field">
+      <div class="field" data-goal-for="halten">
+        <label for="{{ goal_form.weight_tolerance_kg.id_for_label }}">Spielraum (± {{ units.weight_label }}, Standard {% if units.uses_lb %}2,2{% else %}1{% endif %})</label>
+        {{ goal_form.weight_tolerance_kg }}
+        {{ goal_form.weight_tolerance_kg.errors }}
+      </div>
+      <div class="field" data-goal-for="abnehmen muskelaufbau">
         <label for="{{ goal_form.target_date.id_for_label }}">Zieldatum (optional)</label>
         {{ goal_form.target_date }}
         {{ goal_form.target_date.errors }}
       </div>
-    </div>
+      <p class="settings-text" data-goal-for="kraft_aufbauen">Für Kraft gibt es noch keine Zielfelder. Dein Kraftfortschritt erscheint, sobald du Workouts protokollierst.</p>
+      <p class="settings-hint">Alle Felder sind optional. Es erscheinen nur die Felder, die zu deinem Zieltyp passen.</p>
+      <button type="submit" class="btn section-save">Speichern</button>
+    </form>
+  </div>
 
-    <div class="tab-panel" data-tab-panel="equipment">
+  <div class="tab-panel" data-tab-panel="equipment">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="section" value="equipment">
       <div class="checkbox-field">
         {{ equipment_form.studio_access }}
         <label for="{{ equipment_form.studio_access.id_for_label }}">Ich habe Zugriff auf ein vollausgestattetes Studio</label>
@@ -86,10 +108,9 @@
         {% endfor %}
         {{ equipment_form.equipment.errors }}
       </div>
-    </div>
-
-    <button type="submit" class="btn">Speichern</button>
-  </form>
+      <button type="submit" class="btn section-save">Speichern</button>
+    </form>
+  </div>
 
   <div class="tab-panel equipment-add" data-tab-panel="equipment">
     <p class="equipment-add-title">Neues Gerät hinzufügen</p>
@@ -112,27 +133,22 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
+{% include "accounts/_tabs_script.html" %}
 <script>
 (function () {
-  var card = document.getElementById('meineDatenCard');
-  var initialTab = card.dataset.initialTab || 'personal';
-  var tabBtns = card.querySelectorAll('.tab-btn');
-  var panels = card.querySelectorAll('.tab-panel');
-
-  function activate(tab) {
-    tabBtns.forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.tab === tab);
+  var select = document.getElementById('{{ goal_form.goal_type.id_for_label }}');
+  if (!select) return;
+  function update() {
+    var type = select.value;
+    document.querySelectorAll('[data-goal-for]').forEach(function (el) {
+      el.hidden = el.getAttribute('data-goal-for').split(' ').indexOf(type) === -1;
     });
-    panels.forEach(function (panel) {
-      panel.classList.toggle('active', panel.dataset.tabPanel === tab);
+    document.querySelectorAll('[data-label-' + type + ']').forEach(function (label) {
+      label.textContent = label.getAttribute('data-label-' + type);
     });
   }
-
-  tabBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () { activate(btn.dataset.tab); });
-  });
-
-  activate(initialTab);
+  select.addEventListener('change', update);
+  update();
 })();
 </script>
 {% endblock %}
